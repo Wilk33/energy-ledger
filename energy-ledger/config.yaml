@@ -3,13 +3,9 @@ description: Magazyn wirtualny prosumenta i bieżący koszt energii TAURON G13
 version: "1.0.0"
 slug: energy-ledger
 url: "https://github.com/Wilk33/energy-ledger"
-stage: stable
-startup: application
-boot: auto
 init: false
 homeassistant_api: true
 hassio_api: true
-hassio_role: default
 services:
   - mqtt:need
 arch:

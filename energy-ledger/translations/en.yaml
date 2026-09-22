@@ -1,0 +1,22 @@
+configuration:
+  grid_import_total_entity: {name: Total import entity, description: Increasing total grid import meter in kWh.}
+  grid_export_total_entity: {name: Total export entity, description: Increasing total grid export meter in kWh.}
+  discount_percent: {name: Net-metering discount, description: Export credited to virtual storage - 80% or 70%.}
+  balance_correction_kwh: {name: One-time storage correction, description: Positive or negative kWh value. The app resets this option to zero after applying it.}
+  history_days: {name: History limit, description: Maximum history days used while recovering state.}
+  tariff_update_enabled: {name: Automatic tariff update, description: Downloads and validates the tariff catalog at startup.}
+  tariff_catalog_url: {name: Tariff catalog URL, description: HTTPS URL of the versioned JSON catalog.}
+  additional_fixed_monthly: {name: Additional fixed fees, description: Monthly capacity, commercial and other gross fees in PLN.}
+  manual_prices_enabled: {name: Use manual prices, description: Replaces the complete automatic catalog with the values below.}
+  manual_energy_morning_peak: {name: Energy - morning peak, description: Gross energy sale price in PLN/kWh.}
+  manual_energy_afternoon_peak: {name: Energy - afternoon peak, description: Gross energy sale price in PLN/kWh.}
+  manual_energy_other: {name: Energy - other hours, description: Gross energy sale price in PLN/kWh.}
+  manual_distribution_morning_peak: {name: Distribution - morning peak, description: Gross variable distribution price in PLN/kWh.}
+  manual_distribution_afternoon_peak: {name: Distribution - afternoon peak, description: Gross variable distribution price in PLN/kWh.}
+  manual_distribution_other: {name: Distribution - other hours, description: Gross variable distribution price in PLN/kWh.}
+  manual_common_variable: {name: Common variable fees, description: Gross quality, RES, cogeneration and other variable fees in PLN/kWh.}
+  manual_fixed_monthly: {name: All manual fixed fees, description: Complete monthly gross fixed fee total in PLN for manual mode.}
+  mqtt_base_topic: {name: MQTT base topic, description: State and availability topic prefix.}
+  mqtt_discovery_prefix: {name: MQTT Discovery prefix, description: Usually homeassistant.}
+  device_name: {name: Device name, description: Device name shown in Home Assistant.}
+  log_level: {name: Log level, description: Application log verbosity.}

@@ -1,0 +1,22 @@
+configuration:
+  grid_import_total_entity: {name: Encja całkowitego importu, description: Rosnący licznik całkowitej energii pobranej z sieci w kWh.}
+  grid_export_total_entity: {name: Encja całkowitego eksportu, description: Rosnący licznik całkowitej energii oddanej do sieci w kWh.}
+  discount_percent: {name: Opust, description: Część eksportu zapisywana w magazynie wirtualnym - 80% albo 70%.}
+  balance_correction_kwh: {name: Jednorazowa korekta magazynu, description: Wartość dodatnia lub ujemna w kWh. Po zastosowaniu aplikacja automatycznie wpisze zero.}
+  history_days: {name: Limit historii, description: Maksymalna liczba dni historii pobieranej przy odzyskiwaniu stanu.}
+  tariff_update_enabled: {name: Automatyczna aktualizacja taryfy, description: Pobiera i sprawdza katalog taryf przy uruchomieniu.}
+  tariff_catalog_url: {name: Adres katalogu taryf, description: Adres HTTPS wersjonowanego katalogu JSON.}
+  additional_fixed_monthly: {name: Dodatkowe opłaty stałe, description: Miesięczna opłata mocowa, handlowa i inne składniki brutto w PLN.}
+  manual_prices_enabled: {name: Użyj cen ręcznych, description: Zastępuje cały automatyczny katalog wartościami z pól poniżej.}
+  manual_energy_morning_peak: {name: Energia - szczyt przedpołudniowy, description: Cena sprzedaży energii brutto w PLN/kWh.}
+  manual_energy_afternoon_peak: {name: Energia - szczyt popołudniowy, description: Cena sprzedaży energii brutto w PLN/kWh.}
+  manual_energy_other: {name: Energia - pozostałe godziny, description: Cena sprzedaży energii brutto w PLN/kWh.}
+  manual_distribution_morning_peak: {name: Dystrybucja - szczyt przedpołudniowy, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
+  manual_distribution_afternoon_peak: {name: Dystrybucja - szczyt popołudniowy, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
+  manual_distribution_other: {name: Dystrybucja - pozostałe godziny, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
+  manual_common_variable: {name: Wspólne opłaty zmienne, description: Suma jakościowej, OZE, kogeneracyjnej i innych zmiennych opłat brutto w PLN/kWh.}
+  manual_fixed_monthly: {name: Wszystkie opłaty stałe ręcznie, description: Pełna miesięczna suma stałych opłat brutto w PLN dla trybu ręcznego.}
+  mqtt_base_topic: {name: Główny temat MQTT, description: Prefiks tematów stanu i dostępności.}
+  mqtt_discovery_prefix: {name: Prefiks MQTT Discovery, description: Zwykle homeassistant.}
+  device_name: {name: Nazwa urządzenia, description: Nazwa urządzenia widoczna w Home Assistant.}
+  log_level: {name: Poziom logowania, description: Szczegółowość dziennika aplikacji.}

@@ -1,0 +1,30 @@
+{
+	"schema_version": 1,
+	"sources": [
+		"https://www.tauron-dystrybucja.pl/-/media/offer-documents/dystrybucja/aktualna-taryfa/stawki-brutto-w-grupach-g-na-rok-2026.ashx",
+		"https://bip.ure.gov.pl/download/3/20340/TauronSprzedaz.pdf"
+	],
+	"tariffs": [
+		{
+			"id": "tauron-g13-2026-regulated",
+			"provider": "TAURON Dystrybucja S.A. / TAURON Sprzedaz Sp. z o.o.",
+			"tariff": "G13",
+			"valid_from": "2026-02-01",
+			"valid_to": "2026-12-31",
+			"gross": true,
+			"energy": {
+				"morning_peak": 0.5803,
+				"afternoon_peak": 0.9631,
+				"other": 0.5240
+			},
+			"distribution": {
+				"morning_peak": 0.2710,
+				"afternoon_peak": 0.4795,
+				"other": 0.0482
+			},
+			"common_variable": 0.0535,
+			"fixed_monthly": 18.97,
+			"notes": "Regulated sale tariff with 5 PLN/MWh excise and 23% VAT, plus TAURON distribution gross. Fixed amount contains the 3-phase network charge and monthly subscription. Capacity and contract fees are configured separately."
+		}
+	]
+}

@@ -1,4 +1,11 @@
-# Energy Ledger
+# Energy Ledger i Battery Charge Controller
+
+Repozytorium zawiera dwie niezależne aplikacje Home Assistant OS:
+
+- **Energy Ledger** - magazyn wirtualny prosumenta i bieżący koszt energii TAURON G13.
+- **Battery Charge Controller** - automatyczne ładowanie baterii Deye nocą i przed popołudniową strefą szczytową. Szczegóły: [dokumentacja aplikacji](battery-charge-controller/DOCS.md).
+
+## Energy Ledger
 
 Energy Ledger to aplikacja Home Assistant OS prowadząca na żywo magazyn wirtualny prosumenta i szacowany koszt energii w taryfie TAURON G13. Nie ma Ingressu ani własnego panelu. Konfiguracja znajduje się w ustawieniach aplikacji, a wyniki pojawiają się jako encje MQTT Discovery.
 

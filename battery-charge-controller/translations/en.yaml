@@ -1,0 +1,44 @@
+configuration:
+  battery_soc_entity: {name: Battery SOC entity, description: Original Deye inverter battery SOC sensor.}
+  prog1_capacity_entity: {name: Prog1 Capacity, description: Program 1 capacity used for night charging.}
+  prog2_capacity_entity: {name: Prog2 Capacity, description: Program 2 capacity reset after charging.}
+  prog3_capacity_entity: {name: Prog3 Capacity, description: Program 3 capacity reset after charging.}
+  prog4_capacity_entity: {name: Prog4 Capacity, description: Program 4 capacity used for day charging.}
+  prog5_capacity_entity: {name: Prog5 Capacity, description: Program 5 capacity reset after charging.}
+  prog6_capacity_entity: {name: Prog6 Capacity, description: Program 6 capacity reset after charging.}
+  prog1_charge_entity: {name: Prog1 Charge, description: Program 1 charge mode used at night.}
+  prog2_charge_entity: {name: Prog2 Charge, description: Program 2 charge mode reset after charging.}
+  prog3_charge_entity: {name: Prog3 Charge, description: Program 3 charge mode reset after charging.}
+  prog4_charge_entity: {name: Prog4 Charge, description: Program 4 charge mode used during the day.}
+  prog5_charge_entity: {name: Prog5 Charge, description: Program 5 charge mode reset after charging.}
+  prog6_charge_entity: {name: Prog6 Charge, description: Program 6 charge mode reset after charging.}
+  grid_charge_entity: {name: Grid Charge, description: Inverter global grid charging switch.}
+  prog5_time_entity: {name: Prog5 Time, description: Seasonal afternoon peak start time.}
+  timezone: {name: Time zone, description: Time zone used by schedules and DST.}
+  summer_start: {name: Summer start, description: MM-DD date starting the summer season.}
+  winter_start: {name: Winter start, description: MM-DD date starting the winter season.}
+  night_start: {name: Night window start, description: Start of night observation.}
+  night_end: {name: Night window end, description: Hard night reset time.}
+  summer_day_start: {name: Summer day start, description: Summer day observation start.}
+  summer_day_end: {name: Summer day end, description: Summer day hard reset.}
+  summer_prog5_time: {name: Summer Prog5 time, description: Prog5 Time value in summer.}
+  winter_day_start: {name: Winter day start, description: Winter day observation start.}
+  winter_day_end: {name: Winter day end, description: Winter day hard reset.}
+  winter_prog5_time: {name: Winter Prog5 time, description: Prog5 Time value in winter.}
+  night_full_charge_minutes: {name: Night full charge time, description: Minutes for the reference SOC range.}
+  night_reference_soc_range: {name: Night SOC range, description: Reference number of SOC points.}
+  night_safety_minutes: {name: Night safety margin, description: Extra minutes before the hard stop.}
+  day_full_charge_minutes: {name: Day full charge time, description: Minutes for the reference SOC range.}
+  day_reference_soc_range: {name: Day SOC range, description: Reference number of SOC points.}
+  day_safety_minutes: {name: Day safety margin, description: Extra minutes before the hard stop.}
+  evaluation_seconds: {name: Evaluation interval, description: Maximum seconds between recalculations.}
+  soc_stale_seconds: {name: SOC stale limit, description: Missing SOC time before active charging is reset.}
+  verify_delay_seconds: {name: Verification delay, description: Wait before readback after a write.}
+  verified_mismatch_retries: {name: Mismatch attempts, description: Attempts when readback clearly differs.}
+  reset_capacity: {name: Reset capacity, description: Capacity value written to Prog1-Prog6.}
+  active_charge_option: {name: Active charge option, description: Select option allowing grid charging.}
+  reset_charge_option: {name: Reset charge option, description: Select option left after charging.}
+  mqtt_base_topic: {name: MQTT base topic, description: Controller topic prefix.}
+  mqtt_discovery_prefix: {name: Discovery prefix, description: Usually homeassistant.}
+  device_name: {name: Device name, description: Name shown in Home Assistant.}
+  log_level: {name: Log level, description: Application log verbosity.}

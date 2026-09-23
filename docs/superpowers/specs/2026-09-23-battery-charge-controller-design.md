@@ -2,7 +2,7 @@
 
 Data: 2026-09-23
 
-Status: projekt zatwierdzony w rozmowie, oczekuje na kontrolę zapisanej specyfikacji
+Status: zatwierdzona przez użytkownika 2026-09-23
 
 ## 1. Cel
 
@@ -432,4 +432,3 @@ Projekt korzysta z następujących rzeczywistych źródeł:
 - przekazane przez użytkownika identyfikatory encji Deye i wymaganie zmiany `Prog5 Time`,
 - [Taryfa TAURON Dystrybucja na rok 2026](https://www.tauron-dystrybucja.pl/-/media/offer-documents/dystrybucja/aktualna-taryfa/taryfa-tauron-dystrybucja-2026_ocr.ashx) - okresy sezonowe G13, godziny popołudniowego szczytu oraz traktowanie sobót, niedziel i dni ustawowo wolnych,
 - istniejący kod i pakowanie dodatku `Energy Ledger` w tym repozytorium - wzorzec komunikacji z Supervisorem, Home Assistant i MQTT.
-

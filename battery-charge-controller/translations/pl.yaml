@@ -1,0 +1,44 @@
+configuration:
+  battery_soc_entity: {name: Encja SOC baterii, description: Oryginalny sensor SOC falownika Deye.}
+  prog1_capacity_entity: {name: Prog1 Capacity, description: Encja pojemności programu 1 używanego nocą.}
+  prog2_capacity_entity: {name: Prog2 Capacity, description: Encja pojemności programu 2 resetowana po ładowaniu.}
+  prog3_capacity_entity: {name: Prog3 Capacity, description: Encja pojemności programu 3 resetowana po ładowaniu.}
+  prog4_capacity_entity: {name: Prog4 Capacity, description: Encja pojemności programu 4 używanego w dzień.}
+  prog5_capacity_entity: {name: Prog5 Capacity, description: Encja pojemności programu 5 resetowana po ładowaniu.}
+  prog6_capacity_entity: {name: Prog6 Capacity, description: Encja pojemności programu 6 resetowana po ładowaniu.}
+  prog1_charge_entity: {name: Prog1 Charge, description: Tryb ładowania programu 1 używanego nocą.}
+  prog2_charge_entity: {name: Prog2 Charge, description: Tryb programu 2 resetowany po ładowaniu.}
+  prog3_charge_entity: {name: Prog3 Charge, description: Tryb programu 3 resetowany po ładowaniu.}
+  prog4_charge_entity: {name: Prog4 Charge, description: Tryb ładowania programu 4 używanego w dzień.}
+  prog5_charge_entity: {name: Prog5 Charge, description: Tryb programu 5 resetowany po ładowaniu.}
+  prog6_charge_entity: {name: Prog6 Charge, description: Tryb programu 6 resetowany po ładowaniu.}
+  grid_charge_entity: {name: Grid Charge, description: Globalne zezwolenie falownika na ładowanie z sieci.}
+  prog5_time_entity: {name: Prog5 Time, description: Sezonowa godzina początku popołudniowej strefy szczytowej.}
+  timezone: {name: Strefa czasowa, description: Strefa używana do harmonogramu i zmiany czasu.}
+  summer_start: {name: Początek lata, description: Data MM-DD początku sezonu letniego.}
+  winter_start: {name: Początek zimy, description: Data MM-DD początku sezonu zimowego.}
+  night_start: {name: Początek okna nocnego, description: Godzina rozpoczęcia obserwacji nocnej.}
+  night_end: {name: Koniec okna nocnego, description: Godzina twardego resetu nocnego.}
+  summer_day_start: {name: Początek dnia latem, description: Początek obserwacji dziennej w lecie.}
+  summer_day_end: {name: Koniec dnia latem, description: Twardy reset dzienny w lecie.}
+  summer_prog5_time: {name: Prog5 latem, description: Wartość Prog5 Time w sezonie letnim.}
+  winter_day_start: {name: Początek dnia zimą, description: Początek obserwacji dziennej zimą.}
+  winter_day_end: {name: Koniec dnia zimą, description: Twardy reset dzienny zimą.}
+  winter_prog5_time: {name: Prog5 zimą, description: Wartość Prog5 Time w sezonie zimowym.}
+  night_full_charge_minutes: {name: Czas pełnego ładowania nocą, description: Minuty dla referencyjnego zakresu SOC.}
+  night_reference_soc_range: {name: Zakres SOC nocą, description: Referencyjna liczba punktów SOC.}
+  night_safety_minutes: {name: Zapas nocny, description: Minuty zapasu przed twardym końcem.}
+  day_full_charge_minutes: {name: Czas pełnego ładowania w dzień, description: Minuty dla referencyjnego zakresu SOC.}
+  day_reference_soc_range: {name: Zakres SOC w dzień, description: Referencyjna liczba punktów SOC.}
+  day_safety_minutes: {name: Zapas dzienny, description: Minuty zapasu przed twardym końcem.}
+  evaluation_seconds: {name: Odstęp oceny, description: Maksymalny odstęp ponownego przeliczenia w sekundach.}
+  soc_stale_seconds: {name: Limit braku SOC, description: Czas bez prawidłowego SOC przed resetem aktywnego ładowania.}
+  verify_delay_seconds: {name: Opóźnienie kontroli, description: Czas oczekiwania przed odczytem po zapisie.}
+  verified_mismatch_retries: {name: Próby po niezgodności, description: Liczba prób przy jednoznacznie innej wartości odczytanej.}
+  reset_capacity: {name: Capacity po resecie, description: Wartość ustawiana w Prog1-Prog6.}
+  active_charge_option: {name: Tryb aktywnego ładowania, description: Opcja select pozwalająca ładować z sieci.}
+  reset_charge_option: {name: Tryb po resecie, description: Opcja select pozostawiana po ładowaniu.}
+  mqtt_base_topic: {name: Główny temat MQTT, description: Prefiks tematów sterownika.}
+  mqtt_discovery_prefix: {name: Prefiks Discovery, description: Zwykle homeassistant.}
+  device_name: {name: Nazwa urządzenia, description: Nazwa widoczna w Home Assistant.}
+  log_level: {name: Poziom logowania, description: Szczegółowość dziennika.}

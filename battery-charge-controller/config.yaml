@@ -1,0 +1,101 @@
+name: Battery Charge Controller
+description: Bezpieczne automatyczne ładowanie baterii Deye według godzin TAURON G13
+version: "1.0.0"
+slug: battery-charge-controller
+url: "https://github.com/Wilk33/energy-ledger"
+init: false
+homeassistant_api: true
+hassio_api: true
+services:
+  - mqtt:need
+arch:
+  - aarch64
+  - amd64
+options:
+  battery_soc_entity: sensor.deye_deye_10kw_battery_soc
+  prog1_capacity_entity: number.deye_deye_10kw_prog1_capacity
+  prog2_capacity_entity: number.deye_deye_10kw_prog2_capacity
+  prog3_capacity_entity: number.deye_deye_10kw_prog3_capacity
+  prog4_capacity_entity: number.deye_deye_10kw_prog4_capacity
+  prog5_capacity_entity: number.deye_deye_10kw_prog5_capacity
+  prog6_capacity_entity: number.deye_deye_10kw_prog6_capacity
+  prog1_charge_entity: select.deye_deye_10kw_prog1_charge
+  prog2_charge_entity: select.deye_deye_10kw_prog2_charge
+  prog3_charge_entity: select.deye_deye_10kw_prog3_charge
+  prog4_charge_entity: select.deye_deye_10kw_prog4_charge
+  prog5_charge_entity: select.deye_deye_10kw_prog5_charge
+  prog6_charge_entity: select.deye_deye_10kw_prog6_charge
+  grid_charge_entity: switch.deye_deye_10kw_grid_charge_enabled
+  prog5_time_entity: select.deye_deye_10kw_prog5_time
+  timezone: Europe/Warsaw
+  summer_start: 04-01
+  winter_start: 10-01
+  night_start: "22:00"
+  night_end: "06:55"
+  summer_day_start: "16:10"
+  summer_day_end: "18:55"
+  summer_prog5_time: "19:00"
+  winter_day_start: "13:10"
+  winter_day_end: "15:55"
+  winter_prog5_time: "16:00"
+  night_full_charge_minutes: 157.0
+  night_reference_soc_range: 80.0
+  night_safety_minutes: 15.0
+  day_full_charge_minutes: 201.0
+  day_reference_soc_range: 80.0
+  day_safety_minutes: 0.0
+  evaluation_seconds: 300
+  soc_stale_seconds: 180
+  verify_delay_seconds: 2.0
+  verified_mismatch_retries: 2
+  reset_capacity: 20.0
+  active_charge_option: "Allow Grid & Gen"
+  reset_charge_option: Allow Gen
+  mqtt_base_topic: battery_charge_controller
+  mqtt_discovery_prefix: homeassistant
+  device_name: Ładowanie baterii
+  log_level: INFO
+schema:
+  battery_soc_entity: str
+  prog1_capacity_entity: str
+  prog2_capacity_entity: str
+  prog3_capacity_entity: str
+  prog4_capacity_entity: str
+  prog5_capacity_entity: str
+  prog6_capacity_entity: str
+  prog1_charge_entity: str
+  prog2_charge_entity: str
+  prog3_charge_entity: str
+  prog4_charge_entity: str
+  prog5_charge_entity: str
+  prog6_charge_entity: str
+  grid_charge_entity: str
+  prog5_time_entity: str
+  timezone: str
+  summer_start: str
+  winter_start: str
+  night_start: str
+  night_end: str
+  summer_day_start: str
+  summer_day_end: str
+  summer_prog5_time: str
+  winter_day_start: str
+  winter_day_end: str
+  winter_prog5_time: str
+  night_full_charge_minutes: float(1,1440)
+  night_reference_soc_range: float(1,100)
+  night_safety_minutes: float(0,240)
+  day_full_charge_minutes: float(1,1440)
+  day_reference_soc_range: float(1,100)
+  day_safety_minutes: float(0,240)
+  evaluation_seconds: int(10,3600)
+  soc_stale_seconds: int(10,3600)
+  verify_delay_seconds: float(0,60)
+  verified_mismatch_retries: int(1,5)
+  reset_capacity: float(0,100)
+  active_charge_option: str
+  reset_charge_option: str
+  mqtt_base_topic: str
+  mqtt_discovery_prefix: str
+  device_name: str
+  log_level: list(DEBUG|INFO|WARNING|ERROR)

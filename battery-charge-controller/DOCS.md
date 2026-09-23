@@ -11,7 +11,7 @@ Nie ma Ingressu. Cała konfiguracja znajduje się w ustawieniach aplikacji, a bi
 
 Aplikacja tworzy dokładnie:
 
-- cztery suwaki: próg i cel SOC dla nocy oraz próg i cel SOC dla dnia,
+- osiem suwaków: osobne progi i cele SOC dla lata i zimy, niezależnie dla nocy oraz dnia,
 - dwa przełączniki: ładowanie nocne i ładowanie dzienne,
 - sensor czasu do planowanego startu,
 - sensor czasu do twardego końca okna.
@@ -19,6 +19,8 @@ Aplikacja tworzy dokładnie:
 Nie tworzy kopii bieżącego SOC, sezonu, decyzji ani stanów zapisów. Te informacje są dostępne w oryginalnych encjach Deye i dzienniku aplikacji.
 
 Oba przełączniki są wyłączone przy pierwszym uruchomieniu. Ich późniejszy stan jest zachowywany po restarcie. Wyłączenie aktywnego segmentu natychmiast wyłącza Grid Charge i uruchamia pełny reset.
+
+Domyślnie oba sezony nocne mają próg 30 procent i cel 80 procent. Oba sezony dzienne mają próg 75 procent i cel 80 procent. Aktualizacja z wersji 1.0.0 kopiuje dotychczasową wartość nocną do ustawień noc lato i noc zima, a wartość dzienną do ustawień dzień lato i dzień zima.
 
 ## Domyślne godziny
 
@@ -56,5 +58,7 @@ Brak odczytu kontrolnego jest traktowany jako stan niepewny. Aplikacja nie przec
 3. Sprawdź dziennik oraz sezonową wartość `Prog5 Time`.
 4. Włącz jeden segment i obserwuj oryginalne encje Deye.
 5. Zweryfikuj na instalacji kolejność zapisu oraz fizyczne zachowanie falownika.
+
+Jeżeli skonfigurowana encja nie istnieje, aplikacja wypisuje w dzienniku pełną listę brakujących identyfikatorów. Wartość należy porównać z identyfikatorem encji widocznym w Home Assistant, a następnie poprawić ją w zakładce Konfiguracja aplikacji.
 
 Testy automatyczne nie potwierdzają fizycznego zapisu przez konkretny firmware falownika.

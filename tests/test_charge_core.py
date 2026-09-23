@@ -193,10 +193,27 @@ class ChargeSettingsTests(unittest.TestCase):
 
 	def test_first_start_defaults_are_disabled(self):
 		settings=UserSettings.defaults()
-		self.assertEqual((settings.night_threshold, settings.night_target), (30, 80))
-		self.assertEqual((settings.day_threshold, settings.day_target), (75, 80))
+		self.assertEqual((settings.night_summer_threshold, settings.night_summer_target), (30, 80))
+		self.assertEqual((settings.night_winter_threshold, settings.night_winter_target), (30, 80))
+		self.assertEqual((settings.day_summer_threshold, settings.day_summer_target), (75, 80))
+		self.assertEqual((settings.day_winter_threshold, settings.day_winter_target), (75, 80))
 		self.assertFalse(settings.night_enabled)
 		self.assertFalse(settings.day_enabled)
+
+	def test_old_four_slider_state_is_migrated_to_both_seasons(self):
+		settings=UserSettings.from_dict({
+			"night_threshold": 35,
+			"night_target": 85,
+			"day_threshold": 70,
+			"day_target": 90,
+			"night_enabled": True,
+			"day_enabled": False,
+		})
+		self.assertEqual((settings.night_summer_threshold, settings.night_summer_target), (35, 85))
+		self.assertEqual((settings.night_winter_threshold, settings.night_winter_target), (35, 85))
+		self.assertEqual((settings.day_summer_threshold, settings.day_summer_target), (70, 90))
+		self.assertEqual((settings.day_winter_threshold, settings.day_winter_target), (70, 90))
+		self.assertTrue(settings.night_enabled)
 
 	def test_atomic_round_trip_preserves_settings_and_completed_keys(self):
 		settings=UserSettings.defaults()
@@ -207,10 +224,10 @@ class ChargeSettingsTests(unittest.TestCase):
 
 	def test_rejects_target_below_threshold_without_saving(self):
 		coordinator=SettingsCoordinator(self.store, UserSettings.defaults())
-		coordinator.apply_number("night_threshold", 70)
+		coordinator.apply_number("night_summer_threshold", 70)
 		with self.assertRaises(SettingsError):
-			coordinator.apply_number("night_target", 60)
-		self.assertEqual(coordinator.settings.night_target, 80)
+			coordinator.apply_number("night_summer_target", 60)
+		self.assertEqual(coordinator.settings.night_summer_target, 80)
 
 	def test_switch_accepts_only_on_and_off(self):
 		coordinator=SettingsCoordinator(self.store, UserSettings.defaults())

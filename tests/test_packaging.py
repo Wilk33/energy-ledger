@@ -35,8 +35,8 @@ class PackagingTests(unittest.TestCase):
 	def test_battery_addon_version_matches_python_package(self):
 		config=(ROOT / "battery-charge-controller" / "config.yaml").read_text(encoding="utf-8")
 		package=(ROOT / "battery_charge_controller" / "__init__.py").read_text(encoding="utf-8")
-		self.assertIn('version: "1.0.0"', config)
-		self.assertIn('__version__="1.0.0"', package)
+		self.assertIn('version: "1.1.0"', config)
+		self.assertIn('__version__="1.1.0"', package)
 
 	def test_battery_addon_has_no_ingress_and_needs_mqtt(self):
 		config=(ROOT / "battery-charge-controller" / "config.yaml").read_text(encoding="utf-8")

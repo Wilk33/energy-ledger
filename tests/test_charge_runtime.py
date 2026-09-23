@@ -1,13 +1,15 @@
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from battery_charge_controller.calendar import Segment, window_for
 from battery_charge_controller.config import AppConfig
+from battery_charge_controller.ha import EntityNotFoundError
 from battery_charge_controller.mqtt import MqttCommand
-from battery_charge_controller.runtime import BatteryChargeRuntime
+from battery_charge_controller.runtime import BatteryChargeRuntime, MissingEntitiesError
 from battery_charge_controller.settings import SettingsCoordinator, UserSettings
 from battery_charge_controller.storage import JsonStateStore
 from tests.test_charge_core import base_options
@@ -22,8 +24,11 @@ class FakeHomeAssistant:
 		self.states={entities.battery_soc: "50", entities.grid_charge: "off", entities.prog5_time: "16:00"}
 		self.states.update({entity: str(config.reset_capacity) for entity in entities.capacity})
 		self.states.update({entity: config.reset_charge_option for entity in entities.charge})
+		self.missing=set()
 
 	async def get_state(self, entity_id):
+		if entity_id in self.missing:
+			raise EntityNotFoundError(entity_id)
 		return self.states[entity_id]
 
 	async def state_events(self, watched):
@@ -78,7 +83,13 @@ class ChargeRuntimeTests(unittest.IsolatedAsyncioTestCase):
 		self.config=AppConfig.from_options(options)
 		self.temporary=tempfile.TemporaryDirectory()
 		self.store=JsonStateStore(Path(self.temporary.name) / "state.json")
-		settings=UserSettings(40, 80, 75, 80, True, True)
+		settings=replace(
+			UserSettings.defaults(),
+			night_summer_threshold=40,
+			night_winter_threshold=40,
+			night_enabled=True,
+			day_enabled=True,
+		)
 		self.coordinator=SettingsCoordinator(self.store, settings)
 		self.ha=FakeHomeAssistant(self.config)
 		self.executor=FakeExecutor(self.ha, self.config)
@@ -89,10 +100,24 @@ class ChargeRuntimeTests(unittest.IsolatedAsyncioTestCase):
 		self.temporary.cleanup()
 
 	async def test_startup_syncs_summer_prog5_when_day_switch_is_off(self):
-		self.coordinator.settings=UserSettings(40, 80, 75, 80, True, False)
+		self.coordinator.settings=replace(
+			UserSettings.defaults(),
+			night_summer_threshold=40,
+			night_winter_threshold=40,
+			night_enabled=True,
+			day_enabled=False,
+		)
 		await self.runtime.initialize(datetime(2026, 6, 15, 12, 0, tzinfo=WARSAW))
 		self.assertEqual(self.executor.prog5_values, ["19:00"])
 		self.assertEqual(self.mqtt.discovery_count, 1)
+
+	async def test_startup_reports_all_missing_configured_entities(self):
+		missing={self.config.entities.capacity[3], self.config.entities.charge[3]}
+		self.ha.missing=missing
+		with self.assertRaises(MissingEntitiesError) as raised:
+			await self.runtime.initialize(datetime(2026, 6, 15, 12, 0, tzinfo=WARSAW))
+		for entity_id in missing:
+			self.assertIn(entity_id, str(raised.exception))
 
 	async def test_startup_outside_window_resets_active_grid_charge(self):
 		self.ha.states[self.config.entities.grid_charge]="on"
@@ -157,6 +182,44 @@ class ChargeRuntimeTests(unittest.IsolatedAsyncioTestCase):
 		self.ha.states[self.config.entities.battery_soc]="20"
 		await self.runtime.evaluate(now)
 		self.assertEqual(self.executor.started, [])
+
+	async def test_day_charge_uses_separate_summer_and_winter_thresholds_and_targets(self):
+		self.coordinator.settings=replace(
+			UserSettings.defaults(),
+			day_summer_threshold=75,
+			day_summer_target=90,
+			day_winter_threshold=70,
+			day_winter_target=85,
+			day_enabled=True,
+		)
+		self.ha.states[self.config.entities.battery_soc]="72"
+		await self.runtime.evaluate(datetime(2026, 6, 15, 18, 50, tzinfo=WARSAW))
+		self.assertEqual(self.executor.started, [(Segment.DAY, 90)])
+		self.runtime.active_segment=None
+		self.runtime.active_window=None
+		self.executor.started.clear()
+		self.ha.states[self.config.entities.battery_soc]="65"
+		await self.runtime.evaluate(datetime(2026, 1, 15, 15, 50, tzinfo=WARSAW))
+		self.assertEqual(self.executor.started, [(Segment.DAY, 85)])
+
+	async def test_night_charge_uses_separate_summer_and_winter_thresholds_and_targets(self):
+		self.coordinator.settings=replace(
+			UserSettings.defaults(),
+			night_summer_threshold=40,
+			night_summer_target=90,
+			night_winter_threshold=35,
+			night_winter_target=85,
+			night_enabled=True,
+		)
+		self.ha.states[self.config.entities.battery_soc]="37"
+		await self.runtime.evaluate(datetime(2026, 6, 15, 6, 50, tzinfo=WARSAW))
+		self.assertEqual(self.executor.started, [(Segment.NIGHT, 90)])
+		self.runtime.active_segment=None
+		self.runtime.active_window=None
+		self.executor.started.clear()
+		self.ha.states[self.config.entities.battery_soc]="32"
+		await self.runtime.evaluate(datetime(2026, 1, 15, 6, 50, tzinfo=WARSAW))
+		self.assertEqual(self.executor.started, [(Segment.NIGHT, 85)])
 
 	async def test_timer_delay_reaches_hard_stop_without_waiting_full_interval(self):
 		now=datetime(2026, 6, 15, 18, 54, tzinfo=WARSAW)

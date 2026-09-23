@@ -3,7 +3,7 @@ import unittest
 from battery_charge_controller.calendar import Segment
 from battery_charge_controller.config import AppConfig
 from battery_charge_controller.executor import CommandExecutor, UncertainWriteError
-from battery_charge_controller.ha import parse_soc, websocket_state_event
+from battery_charge_controller.ha import EntityNotFoundError, HomeAssistantClient, parse_soc, websocket_state_event
 from tests.test_charge_core import base_options
 
 
@@ -51,6 +51,31 @@ class HomeAssistantNormalizationTests(unittest.TestCase):
 		self.assertEqual((event.entity_id, event.state), ("sensor.battery", "42"))
 		payload["event"]["data"]["entity_id"]="sensor.other"
 		self.assertIsNone(websocket_state_event(payload, watched))
+
+
+class MissingResponse:
+	status=404
+
+	async def __aenter__(self):
+		return self
+
+	async def __aexit__(self, exc_type, exc, traceback):
+		return False
+
+	async def read(self):
+		return b""
+
+
+class MissingSession:
+	def get(self, url, headers):
+		return MissingResponse()
+
+
+class HomeAssistantClientTests(unittest.IsolatedAsyncioTestCase):
+	async def test_state_404_reports_exact_missing_entity(self):
+		client=HomeAssistantClient(MissingSession(), "token")
+		with self.assertRaisesRegex(EntityNotFoundError, "select\\.deye_prog4_charge"):
+			await client.get_state("select.deye_prog4_charge")
 
 
 class CommandExecutorTests(unittest.IsolatedAsyncioTestCase):

@@ -10,22 +10,50 @@ class SettingsError(ValueError):
 	pass
 
 
+NUMBER_SETTINGS={
+	"night_summer_threshold",
+	"night_summer_target",
+	"night_winter_threshold",
+	"night_winter_target",
+	"day_summer_threshold",
+	"day_summer_target",
+	"day_winter_threshold",
+	"day_winter_target",
+}
+
+
 @dataclass(frozen=True)
 class UserSettings:
-	night_threshold: float
-	night_target: float
-	day_threshold: float
-	day_target: float
+	night_summer_threshold: float
+	night_summer_target: float
+	night_winter_threshold: float
+	night_winter_target: float
+	day_summer_threshold: float
+	day_summer_target: float
+	day_winter_threshold: float
+	day_winter_target: float
 	night_enabled: bool
 	day_enabled: bool
 
 	@classmethod
 	def defaults(cls) -> "UserSettings":
-		return cls(30, 80, 75, 80, False, False)
+		return cls(30, 80, 30, 80, 75, 80, 75, 80, False, False)
 
 	@classmethod
 	def from_dict(cls, value: dict[str, Any]) -> "UserSettings":
 		defaults=asdict(cls.defaults())
+		legacy={
+			"night_threshold": ("night_summer_threshold", "night_winter_threshold"),
+			"night_target": ("night_summer_target", "night_winter_target"),
+			"day_threshold": ("day_summer_threshold", "day_winter_threshold"),
+			"day_target": ("day_summer_target", "day_winter_target"),
+		}
+		for old,targets in legacy.items():
+			if old not in value:
+				continue
+			for target in targets:
+				if target not in value:
+					defaults[target]=value[old]
 		defaults.update({key: item for key,item in value.items() if key in defaults})
 		settings=cls(**defaults)
 		_validate(settings)
@@ -36,13 +64,15 @@ class UserSettings:
 
 
 def _validate(settings: UserSettings):
-	for value in (settings.night_threshold, settings.night_target, settings.day_threshold, settings.day_target):
-		if not 20 <= float(value) <= 100:
+	for key in NUMBER_SETTINGS:
+		if not 20 <= float(getattr(settings, key)) <= 100:
 			raise SettingsError("SOC settings must be between 20 and 100")
-	if settings.night_target < settings.night_threshold:
-		raise SettingsError("Night target cannot be below threshold")
-	if settings.day_target < settings.day_threshold:
-		raise SettingsError("Day target cannot be below threshold")
+	for segment in ("night", "day"):
+		for season in ("summer", "winter"):
+			threshold=float(getattr(settings, f"{segment}_{season}_threshold"))
+			target=float(getattr(settings, f"{segment}_{season}_target"))
+			if target < threshold:
+				raise SettingsError(f"{segment} {season} target cannot be below threshold")
 
 
 class SettingsCoordinator:
@@ -55,7 +85,7 @@ class SettingsCoordinator:
 		self.store.save({"settings": (candidate or self.settings).to_dict(), "completed": sorted(self.completed)})
 
 	def apply_number(self, key: str, value: float) -> UserSettings:
-		if key not in {"night_threshold", "night_target", "day_threshold", "day_target"}:
+		if key not in NUMBER_SETTINGS:
 			raise SettingsError(f"Unknown number setting: {key}")
 		try:
 			parsed=float(value)

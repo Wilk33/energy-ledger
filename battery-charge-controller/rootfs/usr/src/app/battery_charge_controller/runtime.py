@@ -16,7 +16,7 @@ from .calendar import Segment, Season, is_workday, season_for, window_for
 from .config import AppConfig
 from .decision import DecisionAction, evaluate_segment
 from .executor import CommandExecutor
-from .ha import HomeAssistantClient, parse_soc
+from .ha import EntityNotFoundError, HomeAssistantClient, parse_soc
 from .mqtt import MqttCommand, MqttController
 from .settings import SettingsCoordinator, SettingsError, UserSettings
 from .storage import JsonStateStore
@@ -24,6 +24,10 @@ from .supervisor import SupervisorClient
 
 
 LOGGER=logging.getLogger(__name__)
+
+
+class MissingEntitiesError(RuntimeError):
+	pass
 
 
 class ControllerState(str, Enum):
@@ -69,14 +73,33 @@ class BatteryChargeRuntime:
 		self.mqtt.publish_discovery()
 		self.mqtt.publish_settings(self.settings.settings)
 		self.mqtt.publish_durations(None, None)
-		for entity_id in self.watched_entities:
-			await self.home_assistant.get_state(entity_id)
+		missing=[]
+		for entity_id in sorted(self.watched_entities):
+			try:
+				await self.home_assistant.get_state(entity_id)
+			except EntityNotFoundError:
+				missing.append(entity_id)
+		if missing:
+			formatted="\n- ".join(missing)
+			raise MissingEntitiesError(
+				"Nie znaleziono skonfigurowanych encji Home Assistant. "
+				"Popraw identyfikatory w zakładce Konfiguracja aplikacji:\n- "
+				+formatted
+			)
 		await self._sync_prog5(local)
 		await self._reconcile_startup(local)
 		self.state=ControllerState.IDLE if self.active_segment is None else self._charging_state(self.active_segment)
 
 	def _charging_state(self, segment: Segment) -> ControllerState:
 		return ControllerState.CHARGING_NIGHT if segment is Segment.NIGHT else ControllerState.CHARGING_DAY
+
+	def _soc_settings(self, segment: Segment, season: Season) -> tuple[float, float]:
+		prefix=f"{segment.value}_{season.value}"
+		settings=self.settings.settings
+		return (
+			float(getattr(settings, f"{prefix}_threshold")),
+			float(getattr(settings, f"{prefix}_target")),
+		)
 
 	async def _segment_matches_active_settings(self, segment: Segment, now: datetime) -> bool:
 		window=window_for(now, segment, self.config)
@@ -86,7 +109,7 @@ class BatteryChargeRuntime:
 			return False
 		settings=self.settings.settings
 		enabled=settings.night_enabled if segment is Segment.NIGHT else settings.day_enabled
-		target=settings.night_target if segment is Segment.NIGHT else settings.day_target
+		_threshold,target=self._soc_settings(segment, window.season)
 		if not enabled:
 			return False
 		index=0 if segment is Segment.NIGHT else 3
@@ -175,8 +198,7 @@ class BatteryChargeRuntime:
 					return
 				self.last_valid_soc_at=local
 				settings=self.settings.settings
-				threshold=settings.night_threshold if self.active_segment is Segment.NIGHT else settings.day_threshold
-				target=settings.night_target if self.active_segment is Segment.NIGHT else settings.day_target
+				threshold,target=self._soc_settings(self.active_segment, self.active_window.season)
 				enabled=settings.night_enabled if self.active_segment is Segment.NIGHT else settings.day_enabled
 				model=self.config.night if self.active_segment is Segment.NIGHT else self.config.day
 				decision=evaluate_segment(segment=self.active_segment, now=local, window=self.active_window, soc=soc, threshold=threshold, target=target, enabled=enabled, active=True, model=model)
@@ -204,8 +226,7 @@ class BatteryChargeRuntime:
 				self.mqtt.publish_durations(None, None)
 				return
 			settings=self.settings.settings
-			threshold=settings.night_threshold if segment is Segment.NIGHT else settings.day_threshold
-			target=settings.night_target if segment is Segment.NIGHT else settings.day_target
+			threshold,target=self._soc_settings(segment, window.season)
 			enabled=settings.night_enabled if segment is Segment.NIGHT else settings.day_enabled
 			model=self.config.night if segment is Segment.NIGHT else self.config.day
 			decision=evaluate_segment(segment=segment, now=local, window=window, soc=soc, threshold=threshold, target=target, enabled=enabled, active=False, model=model)

@@ -9,6 +9,12 @@ from urllib.parse import quote
 UNAVAILABLE_STATES={"", "unknown", "unavailable", "none", "null"}
 
 
+class EntityNotFoundError(RuntimeError):
+	def __init__(self, entity_id: str):
+		self.entity_id=entity_id
+		super().__init__(f"Nie znaleziono encji Home Assistant: {entity_id}")
+
+
 @dataclass(frozen=True)
 class StateEvent:
 	entity_id: str
@@ -53,6 +59,9 @@ class HomeAssistantClient:
 	async def get_state(self, entity_id: str) -> str:
 		url=f"{self.rest_url}/states/{quote(entity_id, safe='')}"
 		async with self.session.get(url, headers=self.headers) as response:
+			if response.status == 404:
+				await response.read()
+				raise EntityNotFoundError(entity_id)
 			response.raise_for_status()
 			payload=await response.json()
 			return str(payload.get("state", ""))

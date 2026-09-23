@@ -10,17 +10,17 @@ class ChargeMqttTests(unittest.TestCase):
 	def setUp(self):
 		self.messages=discovery_messages("homeassistant", "battery_charge_controller", "Ładowanie baterii")
 
-	def test_discovery_contains_exactly_four_numbers_two_switches_two_sensors(self):
+	def test_discovery_contains_exactly_eight_numbers_two_switches_two_sensors(self):
 		components=[message.component for message in self.messages]
-		self.assertEqual(len(self.messages), 8)
-		self.assertEqual(components.count("number"), 4)
+		self.assertEqual(len(self.messages), 12)
+		self.assertEqual(components.count("number"), 8)
 		self.assertEqual(components.count("switch"), 2)
 		self.assertEqual(components.count("sensor"), 2)
 
 	def test_discovery_has_no_duplicate_soc_season_decision_or_write_status(self):
 		identifiers={message.object_id for message in self.messages}
 		self.assertFalse(identifiers & {"soc", "season", "decision", "write_status"})
-		self.assertEqual(len(identifiers), 8)
+		self.assertEqual(len(identifiers), 12)
 
 	def test_duration_sensors_use_seconds_and_duration_device_class(self):
 		for message in [item for item in self.messages if item.component == "sensor"]:
@@ -31,6 +31,25 @@ class ChargeMqttTests(unittest.TestCase):
 		for message in [item for item in self.messages if item.component == "number"]:
 			self.assertEqual((message.payload["min"], message.payload["max"], message.payload["step"]), (20, 100, 1))
 			self.assertEqual(message.payload["mode"], "slider")
+
+	def test_publish_discovery_removes_old_four_generic_sliders(self):
+		class FakeClient:
+			def __init__(self):
+				self.calls=[]
+
+			def publish(self, topic, value, qos, retain):
+				self.calls.append((topic, value, qos, retain))
+
+		controller=MqttController({}, "battery_charge_controller", "homeassistant", "Ładowanie baterii", None, None)
+		controller.client=FakeClient()
+		controller.publish_discovery()
+		removed={topic for topic,value,qos,retain in controller.client.calls if value == ""}
+		self.assertEqual(removed, {
+			"homeassistant/number/battery_charge_controller/night_threshold/config",
+			"homeassistant/number/battery_charge_controller/night_target/config",
+			"homeassistant/number/battery_charge_controller/day_threshold/config",
+			"homeassistant/number/battery_charge_controller/day_target/config",
+		})
 
 
 class ChargeMqttCommandTests(unittest.IsolatedAsyncioTestCase):
@@ -52,9 +71,15 @@ class ChargeMqttCommandTests(unittest.IsolatedAsyncioTestCase):
 		self.controller.handle_message(message)
 		self.assertTrue(self.queue.empty())
 
-	async def test_settings_payload_contains_exactly_six_writable_states(self):
+	async def test_settings_payload_contains_exactly_ten_writable_states(self):
 		payload=self.controller.settings_payload(UserSettings.defaults())
-		self.assertEqual(set(payload), {"night_threshold", "night_target", "day_threshold", "day_target", "night_enabled", "day_enabled"})
+		self.assertEqual(set(payload), {
+			"night_summer_threshold", "night_summer_target",
+			"night_winter_threshold", "night_winter_target",
+			"day_summer_threshold", "day_summer_target",
+			"day_winter_threshold", "day_winter_target",
+			"night_enabled", "day_enabled",
+		})
 		self.assertEqual(payload["night_enabled"], "OFF")
 
 

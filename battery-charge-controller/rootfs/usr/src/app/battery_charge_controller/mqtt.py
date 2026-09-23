@@ -12,11 +12,17 @@ from .settings import UserSettings
 LOGGER=logging.getLogger(__name__)
 
 NUMBER_NAMES={
-	"night_threshold": "Nocny próg SOC",
-	"night_target": "Nocny cel SOC",
-	"day_threshold": "Dzienny próg SOC",
-	"day_target": "Dzienny cel SOC",
+	"night_summer_threshold": "Nocny próg SOC lato",
+	"night_summer_target": "Nocny cel SOC lato",
+	"night_winter_threshold": "Nocny próg SOC zima",
+	"night_winter_target": "Nocny cel SOC zima",
+	"day_summer_threshold": "Dzienny próg SOC lato",
+	"day_summer_target": "Dzienny cel SOC lato",
+	"day_winter_threshold": "Dzienny próg SOC zima",
+	"day_winter_target": "Dzienny cel SOC zima",
 }
+
+LEGACY_NUMBER_KEYS=("night_threshold", "night_target", "day_threshold", "day_target")
 
 SWITCH_NAMES={
 	"night_enabled": "Ładowanie nocne",
@@ -47,7 +53,7 @@ class MqttCommand:
 
 def discovery_messages(discovery_prefix: str, base_topic: str, device_name: str) -> list[DiscoveryMessage]:
 	availability=f"{base_topic}/availability"
-	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": "1.0.0"}
+	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": "1.1.0"}
 	messages=[]
 	for key,name in NUMBER_NAMES.items():
 		payload={
@@ -104,10 +110,7 @@ class MqttController:
 	def settings_payload(self, settings: UserSettings) -> dict[str, str | float]:
 		value=asdict(settings)
 		return {
-			"night_threshold": value["night_threshold"],
-			"night_target": value["night_target"],
-			"day_threshold": value["day_threshold"],
-			"day_target": value["day_target"],
+			**{key: value[key] for key in NUMBER_NAMES},
 			"night_enabled": "ON" if value["night_enabled"] else "OFF",
 			"day_enabled": "ON" if value["day_enabled"] else "OFF",
 		}
@@ -153,6 +156,8 @@ class MqttController:
 		self.client.publish(topic, str(value), qos=1, retain=retain)
 
 	def publish_discovery(self):
+		for key in LEGACY_NUMBER_KEYS:
+			self._publish(f"{self.discovery_prefix}/number/battery_charge_controller/{key}/config", "")
 		for message in discovery_messages(self.discovery_prefix, self.base_topic, self.device_name):
 			self._publish(message.topic, message.payload)
 		self._publish(f"{self.base_topic}/availability", "online")

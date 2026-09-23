@@ -11,22 +11,26 @@ Do repozytorium `energy-ledger` zostanie dodana druga, niezależna aplikacja Hom
 - ładowanie nocne,
 - ładowanie dzienne przed popołudniową strefą szczytową.
 
-Aplikacja ma sama obliczać najpóźniejszy bezpieczny moment rozpoczęcia ładowania, ustawiać odpowiednie programy falownika, kontrolować wynik zapisu i kończyć ładowanie przed granicą strefy taryfowej. Użytkownik steruje progami i celami SOC z czterech suwaków MQTT oraz może niezależnie wyłączyć automatykę dzienną i nocną dwoma przełącznikami MQTT.
+Aplikacja ma sama obliczać najpóźniejszy bezpieczny moment rozpoczęcia ładowania, ustawiać odpowiednie programy falownika, kontrolować wynik zapisu i kończyć ładowanie przed granicą strefy taryfowej. Użytkownik steruje progami i celami SOC z ośmiu suwaków MQTT, osobno dla lata i zimy, oraz może niezależnie wyłączyć automatykę dzienną i nocną dwoma przełącznikami MQTT.
 
 Projekt nie jest częścią obliczeń magazynu wirtualnego. Obie aplikacje pozostają osobnymi dodatkami Home Assistant i współdzielą jedynie wzorce pakowania, komunikacji z Home Assistant oraz MQTT Discovery.
 
 ## 2. Zakres wydania
 
-Pierwsze wydanie ma udostępnić dokładnie osiem nowych encji MQTT Discovery:
+Wersja 1.1.0 ma udostępnić dokładnie dwanaście encji MQTT Discovery:
 
-1. `number` - próg SOC ładowania nocnego.
-2. `number` - cel SOC ładowania nocnego.
-3. `number` - próg SOC ładowania dziennego.
-4. `number` - cel SOC ładowania dziennego.
-5. `switch` - włączenie automatyki ładowania nocnego.
-6. `switch` - włączenie automatyki ładowania dziennego.
-7. `sensor` - czas do planowanego rozpoczęcia ładowania.
-8. `sensor` - czas do twardego zakończenia bieżącego okna ładowania.
+1. `number` - próg SOC ładowania nocnego latem.
+2. `number` - cel SOC ładowania nocnego latem.
+3. `number` - próg SOC ładowania nocnego zimą.
+4. `number` - cel SOC ładowania nocnego zimą.
+5. `number` - próg SOC ładowania dziennego latem.
+6. `number` - cel SOC ładowania dziennego latem.
+7. `number` - próg SOC ładowania dziennego zimą.
+8. `number` - cel SOC ładowania dziennego zimą.
+9. `switch` - włączenie automatyki ładowania nocnego.
+10. `switch` - włączenie automatyki ładowania dziennego.
+11. `sensor` - czas do planowanego rozpoczęcia ładowania.
+12. `sensor` - czas do twardego zakończenia bieżącego okna ładowania.
 
 Aplikacja nie publikuje kopii bieżącego SOC, progu, celu, sezonu, decyzji ani wyniku zapisu. Bieżący SOC pozostaje dostępny w oryginalnej encji falownika, a progi i cele są już widoczne na suwakach. Szczegóły decyzji, prób zapisu i kontroli wyniku trafiają do logu dodatku.
 
@@ -134,19 +138,19 @@ Przejście czasu letniego i zimowego nie może utworzyć podwójnej sekwencji za
 
 Zakres wszystkich suwaków wynosi od 20 do 100 procent, krok 1 procent. Dodatkowo:
 
-- nocny próg musi być mniejszy lub równy nocnemu celowi,
-- dzienny próg musi być mniejszy lub równy dziennemu celowi.
+- nocny próg musi być mniejszy lub równy nocnemu celowi osobno dla lata i zimy,
+- dzienny próg musi być mniejszy lub równy dziennemu celowi osobno dla lata i zimy.
 
 Niepoprawna para blokuje tylko dany segment i jest opisana w logu. Aplikacja nie poprawia samoczynnie wartości użytkownika przez obcinanie progu lub celu.
 
 Domyślne wartości pierwszego uruchomienia:
 
-- nocny próg: 30 procent,
-- nocny cel: 80 procent,
-- dzienny próg: 75 procent,
-- dzienny cel: 80 procent.
+- nocny próg lato i zima: 30 procent,
+- nocny cel lato i zima: 80 procent,
+- dzienny próg lato i zima: 75 procent,
+- dzienny cel lato i zima: 80 procent.
 
-Wartości są wspólne dla obu sezonów. Sezon zmienia harmonogram dzienny i `Prog5 Time`, a nie tworzy kolejnych suwaków.
+Każdy segment korzysta z pary próg-cel właściwej dla sezonu wybranego na podstawie lokalnej daty. Aktualizacja z wersji 1.0.0 przenosi dotychczasową parę nocną do obu sezonów nocnych i parę dzienną do obu sezonów dziennych.
 
 ### 6.2. Przełączniki
 
@@ -383,7 +387,7 @@ Wymagane przypadki:
 - wybór lata i zimy na datach granicznych,
 - prawidłowe zachowanie podczas zmiany czasu Europe/Warsaw,
 - pominięcie soboty, niedzieli oraz każdego polskiego dnia ustawowo wolnego,
-- walidacja czterech suwaków i relacji próg-cel,
+- walidacja ośmiu suwaków i czterech relacji próg-cel,
 - dokładne obliczenie najpóźniejszego startu nocnego,
 - dokładne obliczenie najpóźniejszego startu dziennego z korektą powyżej 98 i 99 procent,
 - reset nocny dokładnie o 06:55,
@@ -398,8 +402,8 @@ Wymagane przypadki:
 - zachowanie po braku SOC i po przekroczeniu limitu świeżości,
 - synchronizacja `Prog5 Time` na granicy sezonu i przy starcie po pominiętej granicy,
 - bezpieczne odzyskanie po restarcie w każdym stanie częściowym,
-- dokładnie osiem encji MQTT Discovery bez kopii SOC i diagnostyki,
-- trwałość czterech suwaków i dwóch przełączników,
+- dokładnie dwanaście encji MQTT Discovery bez kopii SOC i diagnostyki,
+- trwałość ośmiu suwaków i dwóch przełączników,
 - zgodność skopiowanego kodu w `rootfs` ze źródłem kanonicznym,
 - poprawność `config.yaml`, obrazu i skryptu startowego dodatku,
 - pełny istniejący zestaw testów Energy Ledger bez regresji.
@@ -412,7 +416,7 @@ Wydanie jest gotowe, gdy:
 
 - oba dodatki są widoczne w repozytorium Home Assistant,
 - nowy dodatek uruchamia się na `aarch64` i `amd64`,
-- publikuje dokładnie osiem uzgodnionych encji,
+- publikuje dokładnie dwanaście uzgodnionych encji,
 - zachowuje ustawienia po restarcie,
 - poprawnie wybiera sezon i dzień taryfowy,
 - rozpoczyna każdy segment w wyliczonym czasie,

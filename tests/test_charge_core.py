@@ -39,6 +39,8 @@ def base_options():
 		"evaluation_seconds": 300,
 		"soc_stale_seconds": 180,
 		"verify_delay_seconds": 0,
+		"verify_timeout_seconds": 0.02,
+		"verify_poll_seconds": 0.001,
 		"verified_mismatch_retries": 2,
 		"reset_capacity": 20,
 		"active_charge_option": "Allow Grid & Gen",
@@ -63,6 +65,8 @@ class ChargeConfigurationTests(unittest.TestCase):
 		self.assertEqual(config.day.full_charge_minutes, 201)
 		self.assertEqual(str(config.summer_day_end), "18:55")
 		self.assertEqual(str(config.winter_day_end), "15:55")
+		self.assertEqual(config.verify_timeout_seconds, 0.02)
+		self.assertEqual(config.verify_poll_seconds, 0.001)
 
 	def test_rejects_wrong_entity_domain(self):
 		options=base_options()

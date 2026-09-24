@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.1
+
+- `Prog5 Time` jest sprawdzany przy starcie i dopiero po zmianie oczekiwanej wartości sezonowej.
+- Chwilowy stan `unavailable` przed zapisem nie powoduje niepotrzebnej zmiany `Prog5 Time`.
+- Odczyt kontrolny po zapisie jest ponawiany przez konfigurowalny czas, bez ponawiania samego zapisu.
+
 ## 1.1.0
 
 - Osiem suwaków SOC: osobne progi i cele dla lata i zimy, niezależnie dla ładowania nocnego i dziennego.

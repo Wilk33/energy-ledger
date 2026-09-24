@@ -1,6 +1,6 @@
 name: Battery Charge Controller
 description: Bezpieczne automatyczne ładowanie baterii Deye według godzin TAURON G13
-version: "1.1.0"
+version: "1.1.1"
 slug: battery-charge-controller
 url: "https://github.com/Wilk33/energy-ledger"
 init: false
@@ -47,6 +47,8 @@ options:
   evaluation_seconds: 300
   soc_stale_seconds: 180
   verify_delay_seconds: 2.0
+  verify_timeout_seconds: 30.0
+  verify_poll_seconds: 2.0
   verified_mismatch_retries: 2
   reset_capacity: 20.0
   active_charge_option: "Allow Grid & Gen"
@@ -91,6 +93,8 @@ schema:
   evaluation_seconds: int(10,3600)
   soc_stale_seconds: int(10,3600)
   verify_delay_seconds: float(0,60)
+  verify_timeout_seconds: float(1,300)
+  verify_poll_seconds: float(0.1,60)
   verified_mismatch_retries: int(1,5)
   reset_capacity: float(0,100)
   active_charge_option: str

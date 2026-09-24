@@ -51,6 +51,10 @@ Pełny reset wykonuje kolejno:
 
 Brak odczytu kontrolnego jest traktowany jako stan niepewny. Aplikacja nie przechodzi wtedy do kolejnego kroku uruchomienia i próbuje pozostawić Grid Charge wyłączony.
 
+`Prog5 Time` jest odczytywany przy uruchomieniu. Jeżeli wartość jest już zgodna z bieżącym sezonem, aplikacja nie wykonuje zapisu. Kolejne sprawdzenie następuje dopiero po zmianie oczekiwanej wartości sezonowej. Chwilowy stan `unavailable` nie jest traktowany jako inna godzina.
+
+Po rzeczywistym zapisie aplikacja czeka domyślnie do 30 sekund na oczekiwaną wartość i ponawia sam odczyt co 2 sekundy. Nie wysyła ponownie polecenia przy każdej opóźnionej odpowiedzi. Parametry `verify_timeout_seconds` i `verify_poll_seconds` można zmienić w konfiguracji.
+
 ## Pierwsze uruchomienie
 
 1. Sprawdź wszystkie identyfikatory encji Deye w ustawieniach.

@@ -34,6 +34,8 @@ configuration:
   evaluation_seconds: {name: Odstęp oceny, description: Maksymalny odstęp ponownego przeliczenia w sekundach.}
   soc_stale_seconds: {name: Limit braku SOC, description: Czas bez prawidłowego SOC przed resetem aktywnego ładowania.}
   verify_delay_seconds: {name: Opóźnienie kontroli, description: Czas oczekiwania przed odczytem po zapisie.}
+  verify_timeout_seconds: {name: Limit potwierdzenia, description: Maksymalny czas oczekiwania na prawidłowy odczyt po zapisie.}
+  verify_poll_seconds: {name: Odstęp odczytów kontrolnych, description: Odstęp między kolejnymi odczytami podczas oczekiwania na potwierdzenie.}
   verified_mismatch_retries: {name: Próby po niezgodności, description: Liczba prób przy jednoznacznie innej wartości odczytanej.}
   reset_capacity: {name: Capacity po resecie, description: Wartość ustawiana w Prog1-Prog6.}
   active_charge_option: {name: Tryb aktywnego ładowania, description: Opcja select pozwalająca ładować z sieci.}

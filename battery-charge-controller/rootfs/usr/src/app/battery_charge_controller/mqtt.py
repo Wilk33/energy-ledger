@@ -53,7 +53,7 @@ class MqttCommand:
 
 def discovery_messages(discovery_prefix: str, base_topic: str, device_name: str) -> list[DiscoveryMessage]:
 	availability=f"{base_topic}/availability"
-	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": "1.1.0"}
+	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": "1.1.1"}
 	messages=[]
 	for key,name in NUMBER_NAMES.items():
 		payload={

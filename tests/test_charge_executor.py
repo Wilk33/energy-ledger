@@ -114,24 +114,36 @@ class CommandExecutorTests(unittest.IsolatedAsyncioTestCase):
 
 	async def test_missing_readback_blocks_grid_on_and_attempts_grid_off(self):
 		capacity=self.config.entities.capacity[0]
-		self.client.read_sequences[capacity]=["unavailable"]
+		self.client.read_sequences[capacity]=["unavailable"]*100
 		with self.assertRaises(UncertainWriteError):
 			await self.executor.start_charge(Segment.NIGHT, 80)
 		grid=self.config.entities.grid_charge
 		self.assertNotIn(("switch.turn_on", grid, {}), self.client.calls)
 		self.assertIn(("switch.turn_off", grid, {}), self.client.calls)
 
-	async def test_confirmed_mismatch_retries_and_then_succeeds(self):
+	async def test_delayed_readback_is_polled_without_repeating_write(self):
 		capacity=self.config.entities.capacity[0]
-		self.client.read_sequences[capacity]=["79", "80"]
+		self.client.read_sequences[capacity]=["79", "unavailable", "80"]
 		await self.executor.start_charge(Segment.NIGHT, 80)
-		self.assertEqual(self.client.write_count(capacity), 2)
+		self.assertEqual(self.client.write_count(capacity), 1)
 
 	async def test_prog5_is_written_only_when_season_value_differs(self):
 		await self.executor.sync_prog5_time("16:00")
 		self.assertEqual(self.client.written_entities, [])
 		await self.executor.sync_prog5_time("19:00")
 		self.assertEqual(self.client.written_entities, [self.config.entities.prog5_time])
+
+	async def test_prog5_waits_for_current_state_before_deciding_to_write(self):
+		entity=self.config.entities.prog5_time
+		self.client.read_sequences[entity]=["unavailable", "unavailable", "19:00"]
+		await self.executor.sync_prog5_time("19:00")
+		self.assertEqual(self.client.written_entities, [])
+
+	async def test_prog5_delayed_confirmation_does_not_repeat_write(self):
+		entity=self.config.entities.prog5_time
+		self.client.read_sequences[entity]=["16:00", "unavailable", "unavailable", "19:00"]
+		await self.executor.sync_prog5_time("19:00")
+		self.assertEqual(self.client.write_count(entity), 1)
 
 
 if __name__ == "__main__":

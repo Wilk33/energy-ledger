@@ -52,6 +52,7 @@ class BatteryChargeRuntime:
 		self.active_segment: Segment | None=None
 		self.active_window=None
 		self.last_valid_soc_at: datetime | None=None
+		self.synced_prog5_value: str | None=None
 		self.evaluate_lock=asyncio.Lock()
 		self.stop_event=asyncio.Event()
 
@@ -66,7 +67,11 @@ class BatteryChargeRuntime:
 		return str(clock)
 
 	async def _sync_prog5(self, now: datetime):
-		await self.executor.sync_prog5_time(self._prog5_value(now))
+		expected=self._prog5_value(now)
+		if self.synced_prog5_value == expected:
+			return
+		await self.executor.sync_prog5_time(expected)
+		self.synced_prog5_value=expected
 
 	async def initialize(self, now: datetime | None=None):
 		local=(now or datetime.now(timezone.utc)).astimezone(self.config.timezone)

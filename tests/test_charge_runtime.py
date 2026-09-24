@@ -111,6 +111,14 @@ class ChargeRuntimeTests(unittest.IsolatedAsyncioTestCase):
 		self.assertEqual(self.executor.prog5_values, ["19:00"])
 		self.assertEqual(self.mqtt.discovery_count, 1)
 
+	async def test_prog5_is_not_checked_again_until_expected_season_value_changes(self):
+		await self.runtime.initialize(datetime(2026, 6, 15, 12, 0, tzinfo=WARSAW))
+		await self.runtime.evaluate(datetime(2026, 6, 15, 12, 5, tzinfo=WARSAW))
+		await self.runtime.evaluate(datetime(2026, 6, 15, 12, 10, tzinfo=WARSAW))
+		self.assertEqual(self.executor.prog5_values, ["19:00"])
+		await self.runtime.evaluate(datetime(2026, 10, 1, 12, 0, tzinfo=WARSAW))
+		self.assertEqual(self.executor.prog5_values, ["19:00", "16:00"])
+
 	async def test_startup_reports_all_missing_configured_entities(self):
 		missing={self.config.entities.capacity[3], self.config.entities.charge[3]}
 		self.ha.missing=missing

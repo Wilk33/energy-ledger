@@ -283,7 +283,7 @@ Pełny reset jest używany:
 
 Nieudany krok rozpoczęcia nigdy nie prowadzi do włączenia `Grid Charge`. Jeżeli błąd wystąpi po jego włączeniu, aplikacja natychmiast przechodzi do resetu. Po nieudanym potwierdzeniu zapisu można ponowić ustawienie wyłącznie wtedy, gdy odczyt jednoznacznie pokazuje wartość inną od oczekiwanej. Brak odczytu jest stanem niepewnym i powoduje próbę wyłączenia `Grid Charge`, zakończenie sekwencji oraz błąd w logu.
 
-Domyślnie dopuszczalne są dwie próby idempotentnego ustawienia przy potwierdzonej niezgodności. Liczba prób i opóźnienie kontroli są konfigurowalne.
+Domyślnie dopuszczalne są dwie próby idempotentnego ustawienia przy potwierdzonej, trwałej niezgodności. Po pojedynczym zapisie aplikacja przez konfigurowalny czas ponawia wyłącznie odczyt kontrolny. Chwilowy stan `unavailable` nie powoduje ponowienia zapisu ani zmiany `Prog5 Time`. Limit oczekiwania, odstęp odczytów, liczba prób i początkowe opóźnienie kontroli są konfigurowalne.
 
 ## 10. Stan po restarcie i odzyskiwanie
 
@@ -348,7 +348,7 @@ Konfiguracja obejmuje:
 - limit świeżości SOC,
 - wartość pojemności resetu,
 - aktywną i resetową opcję trybu ładowania,
-- czas oczekiwania na odczyt kontrolny i liczbę prób przy potwierdzonej niezgodności,
+- początkowe opóźnienie, limit oczekiwania, odstęp odczytów kontrolnych i liczbę prób przy potwierdzonej niezgodności,
 - bazowy temat MQTT, prefiks Discovery, nazwę urządzenia i poziom logowania.
 
 Walidacja przy starcie kończy proces czytelnym błędem przed jakimkolwiek zapisem do Home Assistant, jeśli:

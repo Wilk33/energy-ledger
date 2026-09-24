@@ -34,6 +34,8 @@ configuration:
   evaluation_seconds: {name: Evaluation interval, description: Maximum seconds between recalculations.}
   soc_stale_seconds: {name: SOC stale limit, description: Missing SOC time before active charging is reset.}
   verify_delay_seconds: {name: Verification delay, description: Wait before readback after a write.}
+  verify_timeout_seconds: {name: Verification timeout, description: Maximum time to wait for the expected readback after a write.}
+  verify_poll_seconds: {name: Verification poll interval, description: Delay between readback checks while waiting for confirmation.}
   verified_mismatch_retries: {name: Mismatch attempts, description: Attempts when readback clearly differs.}
   reset_capacity: {name: Reset capacity, description: Capacity value written to Prog1-Prog6.}
   active_charge_option: {name: Active charge option, description: Select option allowing grid charging.}

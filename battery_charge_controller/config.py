@@ -119,6 +119,8 @@ class AppConfig:
 	evaluation_seconds: int
 	soc_stale_seconds: int
 	verify_delay_seconds: float
+	verify_timeout_seconds: float
+	verify_poll_seconds: float
 	verified_mismatch_retries: int
 	reset_capacity: float
 	active_charge_option: str
@@ -179,6 +181,10 @@ class AppConfig:
 		reset=str(options.get("reset_charge_option", "Allow Gen")).strip()
 		if not active or not reset:
 			raise ConfigurationError("Charge select options cannot be empty")
+		verify_timeout=_number(options, "verify_timeout_seconds", 30, 0.001)
+		verify_poll=_number(options, "verify_poll_seconds", 2, 0.001)
+		if verify_poll > verify_timeout:
+			raise ConfigurationError("verify_poll_seconds must not exceed verify_timeout_seconds")
 		return cls(
 			entities=entities,
 			timezone=timezone,
@@ -205,6 +211,8 @@ class AppConfig:
 			evaluation_seconds=_integer(options, "evaluation_seconds", 300, 1),
 			soc_stale_seconds=_integer(options, "soc_stale_seconds", 180, 1),
 			verify_delay_seconds=_number(options, "verify_delay_seconds", 2),
+			verify_timeout_seconds=verify_timeout,
+			verify_poll_seconds=verify_poll,
 			verified_mismatch_retries=_integer(options, "verified_mismatch_retries", 2, 1),
 			reset_capacity=reset_capacity,
 			active_charge_option=active,

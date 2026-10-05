@@ -77,8 +77,10 @@ def g13_zone(value: datetime) -> G13Zone:
 class TariffRates:
 	energy: dict[G13Zone, Decimal]
 	distribution: dict[G13Zone, Decimal]
-	common_variable: Decimal
+	quality: Decimal
+	import_fees: dict[str, Decimal]
 	fixed_monthly: Decimal
+	vat_rate: Decimal
 
 	def __post_init__(self):
 		for name,values in (("energy", self.energy), ("distribution", self.distribution)):
@@ -86,8 +88,16 @@ class TariffRates:
 				raise ValueError(f"{name} must contain every G13 zone")
 			if any(value < 0 for value in values.values()):
 				raise ValueError(f"{name} cannot contain negative prices")
-		if self.common_variable < 0 or self.fixed_monthly < 0:
+		if self.quality < 0 or self.fixed_monthly < 0:
 			raise ValueError("Tariff prices cannot be negative")
+		if not self.import_fees or any(not name or value < 0 for name,value in self.import_fees.items()):
+			raise ValueError("Import fees must contain non-negative named prices")
+		if self.vat_rate < 0 or self.vat_rate > 1:
+			raise ValueError("VAT rate must be between 0 and 1")
 
-	def variable_price(self, zone: G13Zone) -> Decimal:
-		return self.energy[zone]+self.distribution[zone]+self.common_variable
+	def settlement_price_net(self, zone: G13Zone) -> Decimal:
+		return self.energy[zone]+self.distribution[zone]+self.quality
+
+	@property
+	def full_import_price_net(self) -> Decimal:
+		return sum(self.import_fees.values(), Decimal("0"))

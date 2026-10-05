@@ -49,7 +49,9 @@ Strefy G13 są wyznaczane w czasie Europe/Warsaw:
 - szczyt popołudniowy zimą: 16:00-21:00 w dni robocze,
 - pozostałe godziny oraz całe soboty, niedziele i polskie dni ustawowo wolne: strefa pozostała.
 
-Koszt zmienny jest liczony z niepokrytej energii w strefach. Późniejszy eksport pokrywa najstarszą niepokrytą energię. Stałe opłaty miesięczne są pokazywane oddzielnie.
+Koszt energii czynnej, zmiennej dystrybucji i opłaty jakościowej jest liczony z niepokrytej energii w strefach. Późniejszy eksport pokrywa najstarszą niepokrytą energię. Opłaty OZE i kogeneracyjna są liczone od całego importu przed rozliczeniem opustu. Stałe opłaty miesięczne są pokazywane oddzielnie.
+
+Stawki katalogu są przechowywane netto. Dla każdej pozycji i strefy aplikacja oblicza wewnętrznie wartość netto oraz VAT zgodnie z zaokrągleniami faktury. MQTT udostępnia wyłącznie wynikowe koszty brutto i zachowuje identyfikatory istniejących encji.
 
 Wbudowany katalog zawiera oficjalne stawki dystrybucyjne TAURON na 2026 rok. Ceny sprzedaży energii i składniki zależne od umowy użytkownik może wpisać ręcznie. Automatyczna aktualizacja katalogu pobiera JSON, sprawdza schemat i datę obowiązywania, zapisuje go atomowo i zachowuje poprzednią poprawną wersję przy błędzie.
 

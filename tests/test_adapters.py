@@ -40,15 +40,29 @@ class MqttAdapterTests(unittest.TestCase):
 		self.assertGreaterEqual(len(messages), 10)
 		self.assertTrue(all(message.payload["state_topic"] == "energy_ledger/state" for message in messages))
 		self.assertEqual(len({message.payload["unique_id"] for message in messages}), len(messages))
+		self.assertTrue(all(message.payload["device"]["sw_version"] == "1.1.0" for message in messages))
 
 	def test_state_payload_exposes_live_signed_balance_and_costs(self):
 		zero={zone: Decimal("0") for zone in G13Zone}
-		ledger=EnergyLedger(discount=Decimal("0.8"), rates=TariffRates(zero, zero, Decimal("0"), Decimal("12")), now=datetime(2026, 9, 1, tzinfo=ZoneInfo("Europe/Warsaw")))
+		ledger=EnergyLedger(discount=Decimal("0.8"), rates=TariffRates(zero, zero, Decimal("0"), {"oze": Decimal("0"), "cogeneration": Decimal("0")}, Decimal("12"), Decimal("0.23")), now=datetime(2026, 9, 1, tzinfo=ZoneInfo("Europe/Warsaw")))
 		ledger.apply_correction(Decimal("-5"), G13Zone.OTHER)
 		payload=state_payload(ledger, "manual", "manual-prices", datetime(2026, 9, 1, 12, 0, tzinfo=ZoneInfo("Europe/Warsaw")))
 		self.assertEqual(payload["virtual_storage_kwh"], -5.0)
 		self.assertEqual(payload["uncovered_energy_kwh"], 5.0)
-		self.assertEqual(payload["estimated_bill_pln"], 12.0)
+		self.assertEqual(payload["estimated_bill_pln"], 14.76)
+		self.assertIn("current_full_import_fees_pln", payload)
+		self.assertNotIn("estimated_bill_net_pln", payload)
+		self.assertNotIn("estimated_vat_pln", payload)
+
+	def test_discovery_exposes_only_gross_cost_entities(self):
+		messages=discovery_messages("homeassistant", "energy_ledger", "Dom")
+		ids={message.payload["unique_id"] for message in messages}
+		self.assertIn("energy_ledger_current_variable_cost_pln", ids)
+		self.assertIn("energy_ledger_current_fixed_cost_pln", ids)
+		self.assertIn("energy_ledger_estimated_bill_pln", ids)
+		self.assertIn("energy_ledger_current_full_import_fees_pln", ids)
+		self.assertNotIn("energy_ledger_estimated_bill_net_pln", ids)
+		self.assertNotIn("energy_ledger_estimated_vat_pln", ids)
 
 
 if __name__ == "__main__":

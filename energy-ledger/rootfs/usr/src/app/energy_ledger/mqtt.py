@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 import json
 
+from . import __version__
 from .ledger import EnergyLedger
 from .tariff import G13Zone
 
@@ -18,9 +19,10 @@ class DiscoveryMessage:
 SENSORS={
 	"virtual_storage_kwh": ("Magazyn wirtualny", "kWh", "energy", None),
 	"uncovered_energy_kwh": ("Niepokryta energia", "kWh", "energy", None),
-	"current_variable_cost_pln": ("Koszt energii w miesiącu", "PLN", "monetary", None),
-	"current_fixed_cost_pln": ("Opłaty stałe w miesiącu", "PLN", "monetary", None),
-	"estimated_bill_pln": ("Szacowana kwota miesiąca", "PLN", "monetary", None),
+	"current_variable_cost_pln": ("Koszt zmienny brutto", "PLN", "monetary", None),
+	"current_full_import_fees_pln": ("Opłaty od pełnego importu brutto", "PLN", "monetary", None),
+	"current_fixed_cost_pln": ("Opłaty stałe brutto", "PLN", "monetary", None),
+	"estimated_bill_pln": ("Szacowana kwota brutto", "PLN", "monetary", None),
 	"import_month_kwh": ("Import w miesiącu", "kWh", "energy", "total_increasing"),
 	"export_month_kwh": ("Eksport w miesiącu", "kWh", "energy", "total_increasing"),
 	"import_morning_peak_kwh": ("Import G13 szczyt przedpołudniowy", "kWh", "energy", "total_increasing"),
@@ -33,7 +35,7 @@ SENSORS={
 
 
 def discovery_messages(prefix: str, base_topic: str, device_name: str) -> list[DiscoveryMessage]:
-	device={"identifiers": ["energy_ledger"], "name": device_name, "manufacturer": "Energy Ledger", "model": "Virtual storage", "sw_version": "1.0.0"}
+	device={"identifiers": ["energy_ledger"], "name": device_name, "manufacturer": "Energy Ledger", "model": "Virtual storage", "sw_version": __version__}
 	messages=[]
 	for key,(name,unit,device_class,state_class) in SENSORS.items():
 		payload={
@@ -64,9 +66,10 @@ def state_payload(ledger: EnergyLedger, tariff_version: str, data_quality: str, 
 	return {
 		"virtual_storage_kwh": float(state.balance_kwh),
 		"uncovered_energy_kwh": float(state.uncovered_kwh),
-		"current_variable_cost_pln": float(ledger.variable_cost),
-		"current_fixed_cost_pln": float(ledger.rates.fixed_monthly),
-		"estimated_bill_pln": float(ledger.estimated_bill),
+		"current_variable_cost_pln": float(ledger.variable_cost_gross),
+		"current_full_import_fees_pln": float(ledger.full_import_fees_gross),
+		"current_fixed_cost_pln": float(ledger.fixed_cost_gross),
+		"estimated_bill_pln": float(ledger.estimated_bill_gross),
 		"import_month_kwh": float(state.import_month_kwh),
 		"export_month_kwh": float(state.export_month_kwh),
 		"import_morning_peak_kwh": float(state.imports_by_zone[G13Zone.MORNING_PEAK]),

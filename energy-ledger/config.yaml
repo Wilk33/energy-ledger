@@ -1,6 +1,6 @@
 name: Energy Ledger
 description: Magazyn wirtualny prosumenta i bieżący koszt energii TAURON G13
-version: "1.0.0"
+version: "1.1.0"
 slug: energy-ledger
 url: "https://github.com/Wilk33/energy-ledger"
 init: false
@@ -19,16 +19,19 @@ options:
   history_days: 45
   tariff_update_enabled: true
   tariff_catalog_url: https://raw.githubusercontent.com/Wilk33/energy-ledger/main/energy-ledger/rootfs/usr/src/app/energy_ledger/data/tauron-g13.json
-  additional_fixed_monthly: 29.58
+  additional_fixed_monthly: 29.5815
   manual_prices_enabled: false
-  manual_energy_morning_peak: 0.5803
-  manual_energy_afternoon_peak: 0.9631
-  manual_energy_other: 0.5240
-  manual_distribution_morning_peak: 0.2710
-  manual_distribution_afternoon_peak: 0.4795
-  manual_distribution_other: 0.0482
-  manual_common_variable: 0.0535
-  manual_fixed_monthly: 48.55
+  manual_energy_morning_peak: 0.580314
+  manual_energy_afternoon_peak: 0.963090
+  manual_energy_other: 0.523980
+  manual_distribution_morning_peak: 0.270969
+  manual_distribution_afternoon_peak: 0.479454
+  manual_distribution_other: 0.048216
+  manual_common_variable: 0.053505
+  manual_oze_variable: 0.008979
+  manual_cogeneration_variable: 0.003690
+  manual_fixed_monthly: 48.5481
+  manual_vat_percent: 23
   mqtt_base_topic: energy_ledger
   mqtt_discovery_prefix: homeassistant
   device_name: Energy Ledger
@@ -50,7 +53,10 @@ schema:
   manual_distribution_afternoon_peak: float(0,100)
   manual_distribution_other: float(0,100)
   manual_common_variable: float(0,100)
+  manual_oze_variable: float(0,100)
+  manual_cogeneration_variable: float(0,100)
   manual_fixed_monthly: float(0,10000)
+  manual_vat_percent: float(0,100)
   mqtt_base_topic: str
   mqtt_discovery_prefix: str
   device_name: str

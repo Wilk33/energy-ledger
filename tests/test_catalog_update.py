@@ -7,17 +7,19 @@ from energy_ledger.catalog_update import install_catalog_bytes
 
 
 VALID={
-	"schema_version": 1,
+	"schema_version": 2,
 	"tariffs": [{
 		"id": "catalog-test",
 		"provider": "TAURON Dystrybucja S.A.",
 		"tariff": "G13",
 		"valid_from": "2026-01-01",
 		"valid_to": "2026-12-31",
-		"gross": True,
+		"prices": "net",
+		"vat_rate": 0.23,
 		"energy": {"morning_peak": 1, "afternoon_peak": 1, "other": 1},
 		"distribution": {"morning_peak": 1, "afternoon_peak": 1, "other": 1},
-		"common_variable": 1,
+		"quality": 1,
+		"import_fees": {"oze": 1, "cogeneration": 1},
 		"fixed_monthly": 1,
 	}],
 }

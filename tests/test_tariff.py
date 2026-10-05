@@ -46,10 +46,13 @@ class TariffRateTests(unittest.TestCase):
 		rates=TariffRates(
 			energy={G13Zone.MORNING_PEAK: Decimal("0.50"), G13Zone.AFTERNOON_PEAK: Decimal("0.70"), G13Zone.OTHER: Decimal("0.30")},
 			distribution={G13Zone.MORNING_PEAK: Decimal("0.20"), G13Zone.AFTERNOON_PEAK: Decimal("0.40"), G13Zone.OTHER: Decimal("0.05")},
-			common_variable=Decimal("0.04"),
+			quality=Decimal("0.04"),
+			import_fees={"oze": Decimal("0.0073"), "cogeneration": Decimal("0.003")},
 			fixed_monthly=Decimal("35.00"),
+			vat_rate=Decimal("0.23"),
 		)
-		self.assertEqual(rates.variable_price(G13Zone.AFTERNOON_PEAK), Decimal("1.14"))
+		self.assertEqual(rates.settlement_price_net(G13Zone.AFTERNOON_PEAK), Decimal("1.14"))
+		self.assertEqual(rates.full_import_price_net, Decimal("0.0103"))
 
 
 if __name__ == "__main__":

@@ -21,7 +21,7 @@ class TariffEntry:
 	tariff: str
 	valid_from: date
 	valid_to: date
-	gross: bool
+	prices: str
 	rates: TariffRates
 
 
@@ -41,32 +41,40 @@ def _zones(value: Any, field: str) -> dict[G13Zone, Decimal]:
 	return {zone: _money(value[zone.value], f"{field}.{zone.value}") for zone in G13Zone}
 
 
+def _named_prices(value: Any, field: str) -> dict[str, Decimal]:
+	if not isinstance(value, dict) or not value:
+		raise CatalogError(f"{field} must contain named prices")
+	return {str(name): _money(price, f"{field}.{name}") for name,price in value.items() if str(name)}
+
+
 def load_catalog(path: Path) -> list[TariffEntry]:
 	try:
 		root=json.loads(path.read_text(encoding="utf-8"))
 	except (OSError, json.JSONDecodeError) as error:
 		raise CatalogError(f"Cannot read tariff catalog: {error}") from error
-	if not isinstance(root, dict) or root.get("schema_version") != 1 or not isinstance(root.get("tariffs"), list):
+	if not isinstance(root, dict) or root.get("schema_version") != 2 or not isinstance(root.get("tariffs"), list):
 		raise CatalogError("Unsupported tariff catalog schema")
 	entries=[]
 	for index,item in enumerate(root["tariffs"]):
 		try:
 			valid_from=date.fromisoformat(item["valid_from"])
 			valid_to=date.fromisoformat(item["valid_to"])
-			if valid_to < valid_from or item["gross"] is not True:
-				raise CatalogError("Dates or gross flag are invalid")
+			if valid_to < valid_from or item["prices"] != "net":
+				raise CatalogError("Dates or prices flag are invalid")
 			entries.append(TariffEntry(
 				identifier=str(item["id"]),
 				provider=str(item["provider"]),
 				tariff=str(item["tariff"]),
 				valid_from=valid_from,
 				valid_to=valid_to,
-				gross=True,
+				prices="net",
 				rates=TariffRates(
 					energy=_zones(item["energy"], "energy"),
 					distribution=_zones(item["distribution"], "distribution"),
-					common_variable=_money(item["common_variable"], "common_variable"),
+					quality=_money(item["quality"], "quality"),
+					import_fees=_named_prices(item["import_fees"], "import_fees"),
 					fixed_monthly=_money(item["fixed_monthly"], "fixed_monthly"),
+					vat_rate=_money(item["vat_rate"], "vat_rate"),
 				),
 			))
 		except (KeyError, TypeError, ValueError) as error:

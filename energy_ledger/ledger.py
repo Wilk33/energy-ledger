@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from decimal import Decimal, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
 from typing import Any
 
@@ -10,6 +10,11 @@ from .tariff import G13Zone, TariffRates, WARSAW, g13_zone
 
 
 ZERO=Decimal("0")
+MONEY=Decimal("0.01")
+
+
+def _money(value: Decimal) -> Decimal:
+	return value.quantize(MONEY, rounding=ROUND_HALF_UP)
 
 
 class MeterKind(str, Enum):
@@ -126,12 +131,94 @@ class EnergyLedger:
 		self.state=state or LedgerState(current_period=_period(current))
 
 	@property
+	def _deficit_by_zone(self) -> dict[G13Zone, Decimal]:
+		values={zone: ZERO for zone in G13Zone}
+		for lot in self.state.deficit_lots:
+			values[lot.zone]+=lot.kwh
+		return values
+
+	def _settlement_lines(self) -> list[Decimal]:
+		lines=[]
+		for zone,kwh in self._deficit_by_zone.items():
+			if kwh <= 0:
+				continue
+			lines.extend((kwh*self.rates.energy[zone], kwh*self.rates.distribution[zone], kwh*self.rates.quality))
+		return lines
+
+	def _full_import_lines(self) -> list[Decimal]:
+		lines=[]
+		for zone,kwh in self.state.imports_by_zone.items():
+			if kwh <= 0:
+				continue
+			lines.extend(kwh*rate for rate in self.rates.import_fees.values())
+		return lines
+
+	@staticmethod
+	def _net(lines: list[Decimal]) -> Decimal:
+		return sum((_money(line) for line in lines), ZERO)
+
+	def _vat(self, lines: list[Decimal]) -> Decimal:
+		return sum((_money(_money(line)*self.rates.vat_rate) for line in lines), ZERO)
+
+	@property
+	def settlement_cost_net(self) -> Decimal:
+		return self._net(self._settlement_lines())
+
+	@property
+	def full_import_fees_net(self) -> Decimal:
+		return self._net(self._full_import_lines())
+
+	@property
+	def full_import_fees_vat(self) -> Decimal:
+		return self._vat(self._full_import_lines())
+
+	@property
+	def full_import_fees_gross(self) -> Decimal:
+		return self.full_import_fees_net+self.full_import_fees_vat
+
+	@property
+	def variable_cost_net(self) -> Decimal:
+		return self.settlement_cost_net+self.full_import_fees_net
+
+	@property
+	def variable_vat(self) -> Decimal:
+		return self._vat(self._settlement_lines()+self._full_import_lines())
+
+	@property
+	def variable_cost_gross(self) -> Decimal:
+		return self.variable_cost_net+self.variable_vat
+
+	@property
+	def fixed_cost_net(self) -> Decimal:
+		return _money(self.rates.fixed_monthly)
+
+	@property
+	def fixed_vat(self) -> Decimal:
+		return _money(self.rates.fixed_monthly*self.rates.vat_rate)
+
+	@property
+	def fixed_cost_gross(self) -> Decimal:
+		return self.fixed_cost_net+self.fixed_vat
+
+	@property
+	def estimated_bill_net(self) -> Decimal:
+		return self.variable_cost_net+self.fixed_cost_net
+
+	@property
+	def estimated_vat(self) -> Decimal:
+		return self.variable_vat+self.fixed_vat
+
+	@property
+	def estimated_bill_gross(self) -> Decimal:
+		return self.estimated_bill_net+self.estimated_vat
+
+	@property
 	def variable_cost(self) -> Decimal:
-		return sum((lot.kwh*self.rates.variable_price(lot.zone) for lot in self.state.deficit_lots), ZERO)
+		return self.variable_cost_gross
 
 	@property
 	def estimated_bill(self) -> Decimal:
-		return self.variable_cost+self.rates.fixed_monthly
+		return self.estimated_bill_gross
 
 	def process_total(self, kind: MeterKind, raw_value: str, occurred_at: datetime) -> bool:
 		if occurred_at.tzinfo is None:
@@ -210,7 +297,7 @@ class EnergyLedger:
 			period=self.state.current_period,
 			shortage_kwh=shortage,
 			variable_cost_pln=self.variable_cost,
-			fixed_cost_pln=self.rates.fixed_monthly,
+			fixed_cost_pln=self.fixed_cost_gross,
 			import_kwh=self.state.import_month_kwh,
 			export_kwh=self.state.export_month_kwh,
 		))

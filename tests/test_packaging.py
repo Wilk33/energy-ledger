@@ -19,8 +19,8 @@ class PackagingTests(unittest.TestCase):
 	def test_addon_version_matches_python_package(self):
 		config=(ROOT / "energy-ledger" / "config.yaml").read_text(encoding="utf-8")
 		package=(ROOT / "energy_ledger" / "__init__.py").read_text(encoding="utf-8")
-		self.assertIn('version: "1.0.0"', config)
-		self.assertIn('__version__="1.0.0"', package)
+		self.assertIn('version: "1.1.0"', config)
+		self.assertIn('__version__="1.1.0"', package)
 
 	def test_battery_controller_runtime_copy_matches_tested_source(self):
 		source=ROOT / "battery_charge_controller"

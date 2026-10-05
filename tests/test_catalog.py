@@ -10,7 +10,7 @@ from energy_ledger.tariff import G13Zone
 
 
 VALID={
-	"schema_version": 1,
+	"schema_version": 2,
 	"tariffs": [
 		{
 			"id": "old",
@@ -18,10 +18,12 @@ VALID={
 			"tariff": "G13",
 			"valid_from": "2026-01-01",
 			"valid_to": "2026-01-31",
-			"gross": True,
+			"prices": "net",
+			"vat_rate": 0.23,
 			"energy": {"morning_peak": 0, "afternoon_peak": 0, "other": 0},
 			"distribution": {"morning_peak": 0.1, "afternoon_peak": 0.2, "other": 0.03},
-			"common_variable": 0.04,
+			"quality": 0.0332,
+			"import_fees": {"oze": 0.0073, "cogeneration": 0.003},
 			"fixed_monthly": 10,
 		},
 		{
@@ -30,11 +32,13 @@ VALID={
 			"tariff": "G13",
 			"valid_from": "2026-02-01",
 			"valid_to": "2026-12-31",
-			"gross": True,
-			"energy": {"morning_peak": 0, "afternoon_peak": 0, "other": 0},
-			"distribution": {"morning_peak": 0.271, "afternoon_peak": 0.4795, "other": 0.0482},
-			"common_variable": 0.053469,
-			"fixed_monthly": 48.55,
+			"prices": "net",
+			"vat_rate": 0.23,
+			"energy": {"morning_peak": 0.4718, "afternoon_peak": 0.783, "other": 0.426},
+			"distribution": {"morning_peak": 0.2203, "afternoon_peak": 0.3898, "other": 0.0392},
+			"quality": 0.0332,
+			"import_fees": {"oze": 0.0073, "cogeneration": 0.003},
+			"fixed_monthly": 15.42,
 		},
 	],
 }
@@ -44,9 +48,12 @@ class CatalogTests(unittest.TestCase):
 	def test_bundled_tauron_catalog_contains_verified_2026_g13_rates(self):
 		path=Path(__file__).resolve().parents[1] / "energy_ledger" / "data" / "tauron-g13.json"
 		entry=select_tariff(load_catalog(path), date(2026, 9, 22))
-		self.assertEqual(entry.identifier, "tauron-g13-2026-regulated")
-		self.assertEqual(entry.rates.energy[G13Zone.AFTERNOON_PEAK], Decimal("0.9631"))
-		self.assertEqual(entry.rates.distribution[G13Zone.OTHER], Decimal("0.0482"))
+		self.assertEqual(entry.identifier, "tauron-g13-2026-invoice-verified")
+		self.assertEqual(entry.rates.energy[G13Zone.AFTERNOON_PEAK], Decimal("0.78300"))
+		self.assertEqual(entry.rates.distribution[G13Zone.OTHER], Decimal("0.03920"))
+		self.assertEqual(entry.rates.quality, Decimal("0.03320"))
+		self.assertEqual(entry.rates.import_fees["oze"], Decimal("0.00730"))
+		self.assertEqual(entry.rates.vat_rate, Decimal("0.23"))
 
 	def test_selects_entry_effective_on_requested_date(self):
 		with tempfile.TemporaryDirectory() as directory:

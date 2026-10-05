@@ -57,19 +57,44 @@ class AppConfig:
 		history_days=int(options.get("history_days", 370))
 		if not 1 <= history_days <= 730:
 			raise ConfigurationError("history_days must be between 1 and 730")
+		manual_prices_enabled=bool(options.get("manual_prices_enabled", False))
+		vat_percent=_decimal(options, "manual_vat_percent", "23")
+		if vat_percent < 0 or vat_percent > 100:
+			raise ConfigurationError("manual_vat_percent must be between 0 and 100")
+		vat_rate=vat_percent/Decimal("100")
+		gross_factor=Decimal("1")+vat_rate
+		def gross_to_net(value: Decimal) -> Decimal:
+			return value/gross_factor
+		def net(key: str, default: str="0") -> Decimal:
+			return gross_to_net(_decimal(options, key, default))
+		split_import_fees="manual_oze_variable" in options or "manual_cogeneration_variable" in options
+		oze_gross=_decimal(options, "manual_oze_variable") if split_import_fees else Decimal("0")
+		cogeneration_gross=_decimal(options, "manual_cogeneration_variable") if split_import_fees else Decimal("0")
+		quality_gross=_decimal(options, "manual_common_variable")-oze_gross-cogeneration_gross
+		if quality_gross < 0:
+			if manual_prices_enabled:
+				raise ConfigurationError("manual_common_variable must include OZE and cogeneration fees")
+			quality_gross=_decimal(options, "manual_common_variable")
+			oze_gross=Decimal("0")
+			cogeneration_gross=Decimal("0")
 		manual_rates=TariffRates(
 			energy={
-				G13Zone.MORNING_PEAK: _decimal(options, "manual_energy_morning_peak"),
-				G13Zone.AFTERNOON_PEAK: _decimal(options, "manual_energy_afternoon_peak"),
-				G13Zone.OTHER: _decimal(options, "manual_energy_other"),
+				G13Zone.MORNING_PEAK: net("manual_energy_morning_peak"),
+				G13Zone.AFTERNOON_PEAK: net("manual_energy_afternoon_peak"),
+				G13Zone.OTHER: net("manual_energy_other"),
 			},
 			distribution={
-				G13Zone.MORNING_PEAK: _decimal(options, "manual_distribution_morning_peak"),
-				G13Zone.AFTERNOON_PEAK: _decimal(options, "manual_distribution_afternoon_peak"),
-				G13Zone.OTHER: _decimal(options, "manual_distribution_other"),
+				G13Zone.MORNING_PEAK: net("manual_distribution_morning_peak"),
+				G13Zone.AFTERNOON_PEAK: net("manual_distribution_afternoon_peak"),
+				G13Zone.OTHER: net("manual_distribution_other"),
 			},
-			common_variable=_decimal(options, "manual_common_variable"),
-			fixed_monthly=_decimal(options, "manual_fixed_monthly"),
+			quality=gross_to_net(quality_gross),
+			import_fees={
+				"oze": gross_to_net(oze_gross),
+				"cogeneration": gross_to_net(cogeneration_gross),
+			},
+			fixed_monthly=net("manual_fixed_monthly"),
+			vat_rate=vat_rate,
 		)
 		return cls(
 			import_entity=import_entity,
@@ -79,7 +104,7 @@ class AppConfig:
 			history_days=history_days,
 			tariff_update_enabled=bool(options.get("tariff_update_enabled", True)),
 			tariff_catalog_url=str(options.get("tariff_catalog_url", "")).strip(),
-			manual_prices_enabled=bool(options.get("manual_prices_enabled", False)),
+			manual_prices_enabled=manual_prices_enabled,
 			manual_rates=manual_rates,
 			additional_fixed_monthly=_decimal(options, "additional_fixed_monthly"),
 			mqtt_base_topic=str(options.get("mqtt_base_topic", "energy_ledger")).strip(" /"),
@@ -94,6 +119,8 @@ class AppConfig:
 		return TariffRates(
 			energy=catalog_rates.energy,
 			distribution=catalog_rates.distribution,
-			common_variable=catalog_rates.common_variable,
-			fixed_monthly=catalog_rates.fixed_monthly+self.additional_fixed_monthly,
+			quality=catalog_rates.quality,
+			import_fees=catalog_rates.import_fees,
+			fixed_monthly=catalog_rates.fixed_monthly+self.additional_fixed_monthly/(Decimal("1")+catalog_rates.vat_rate),
+			vat_rate=catalog_rates.vat_rate,
 		)

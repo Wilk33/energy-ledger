@@ -14,8 +14,11 @@ configuration:
   manual_distribution_morning_peak: {name: Distribution - morning peak, description: Gross variable distribution price in PLN/kWh.}
   manual_distribution_afternoon_peak: {name: Distribution - afternoon peak, description: Gross variable distribution price in PLN/kWh.}
   manual_distribution_other: {name: Distribution - other hours, description: Gross variable distribution price in PLN/kWh.}
-  manual_common_variable: {name: Common variable fees, description: Gross quality, RES, cogeneration and other variable fees in PLN/kWh.}
+  manual_common_variable: {name: Combined variable fees, description: Gross sum of quality, RES and cogeneration fees in PLN/kWh. RES and cogeneration fields separate the parts charged on total import.}
+  manual_oze_variable: {name: RES fee, description: Gross PLN/kWh rate applied to all energy imported from the grid.}
+  manual_cogeneration_variable: {name: Cogeneration fee, description: Gross PLN/kWh rate applied to all energy imported from the grid.}
   manual_fixed_monthly: {name: All manual fixed fees, description: Complete monthly gross fixed fee total in PLN for manual mode.}
+  manual_vat_percent: {name: VAT, description: VAT percentage used to calculate separate net and gross values.}
   mqtt_base_topic: {name: MQTT base topic, description: State and availability topic prefix.}
   mqtt_discovery_prefix: {name: MQTT Discovery prefix, description: Usually homeassistant.}
   device_name: {name: Device name, description: Device name shown in Home Assistant.}

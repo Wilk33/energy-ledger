@@ -14,8 +14,11 @@ configuration:
   manual_distribution_morning_peak: {name: Dystrybucja - szczyt przedpołudniowy, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
   manual_distribution_afternoon_peak: {name: Dystrybucja - szczyt popołudniowy, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
   manual_distribution_other: {name: Dystrybucja - pozostałe godziny, description: Zmienna stawka dystrybucji brutto w PLN/kWh.}
-  manual_common_variable: {name: Wspólne opłaty zmienne, description: Suma jakościowej, OZE, kogeneracyjnej i innych zmiennych opłat brutto w PLN/kWh.}
+  manual_common_variable: {name: Łączne opłaty zmienne, description: Suma brutto opłaty jakościowej, OZE i kogeneracyjnej w PLN/kWh. Pola OZE i kogeneracji wydzielają z niej części naliczane od pełnego importu.}
+  manual_oze_variable: {name: Opłata OZE, description: Stawka brutto w PLN/kWh naliczana od całej energii pobranej z sieci.}
+  manual_cogeneration_variable: {name: Opłata kogeneracyjna, description: Stawka brutto w PLN/kWh naliczana od całej energii pobranej z sieci.}
   manual_fixed_monthly: {name: Wszystkie opłaty stałe ręcznie, description: Pełna miesięczna suma stałych opłat brutto w PLN dla trybu ręcznego.}
+  manual_vat_percent: {name: VAT, description: Procent VAT używany do wyliczenia osobnych wartości netto i brutto.}
   mqtt_base_topic: {name: Główny temat MQTT, description: Prefiks tematów stanu i dostępności.}
   mqtt_discovery_prefix: {name: Prefiks MQTT Discovery, description: Zwykle homeassistant.}
   device_name: {name: Nazwa urządzenia, description: Nazwa urządzenia widoczna w Home Assistant.}

@@ -13,7 +13,7 @@ from energy_ledger.tariff import G13Zone, TariffRates
 
 def rates():
 	zero={zone: Decimal("0") for zone in G13Zone}
-	return TariffRates(energy=zero, distribution=zero, common_variable=Decimal("0"), fixed_monthly=Decimal("0"))
+	return TariffRates(energy=zero, distribution=zero, quality=Decimal("0"), import_fees={"oze": Decimal("0"), "cogeneration": Decimal("0")}, fixed_monthly=Decimal("0"), vat_rate=Decimal("0.23"))
 
 
 class CorrectionTests(unittest.TestCase):

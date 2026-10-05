@@ -23,7 +23,7 @@ class RuntimeTests(unittest.TestCase):
 
 	def test_manual_tariff_does_not_depend_on_catalog_validity_dates(self):
 		zero={zone: Decimal("0") for zone in G13Zone}
-		entry=manual_tariff_entry(TariffRates(zero, zero, Decimal("0"), Decimal("12")), date(2030, 1, 1))
+		entry=manual_tariff_entry(TariffRates(zero, zero, Decimal("0"), {"oze": Decimal("0"), "cogeneration": Decimal("0")}, Decimal("12"), Decimal("0.23")), date(2030, 1, 1))
 		self.assertEqual(entry.identifier, "manual")
 		self.assertEqual(entry.valid_to, date.max)
 

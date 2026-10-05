@@ -40,7 +40,7 @@ def history_start(ledger_data: dict[str, Any], now: datetime, history_days: int)
 
 
 def manual_tariff_entry(rates: TariffRates, day: date) -> TariffEntry:
-	return TariffEntry("manual", "manual", "G13", day, date.max, True, rates)
+	return TariffEntry("manual", "manual", "G13", day, date.max, "net", rates)
 
 
 def load_options_file(path: Path=Path("/data/options.json")) -> dict[str, Any]:

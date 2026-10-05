@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Stawki G13 zweryfikowane na fakturze TAURON za wrzesień 2026.
+- Osobne podstawy naliczania energii po opuście oraz opłat OZE i kogeneracyjnej od pełnego importu.
+- Koszty brutto zgodne z pozycjami i VAT z faktury.
+- Zaokrąglanie pozycji kosztowych zgodne z układem faktury.
+- Zachowane identyfikatory dotychczasowych encji brutto i obsługa starszej ręcznej stawki łącznej.
+
 ## 1.0.0
 
 - Pierwsza wersja testowa.

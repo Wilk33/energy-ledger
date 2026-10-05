@@ -9,7 +9,7 @@ Repozytorium zawiera dwie niezależne aplikacje Home Assistant OS:
 
 Energy Ledger to aplikacja Home Assistant OS prowadząca na żywo magazyn wirtualny prosumenta i szacowany koszt energii w taryfie TAURON G13. Nie ma Ingressu ani własnego panelu. Konfiguracja znajduje się w ustawieniach aplikacji, a wyniki pojawiają się jako encje MQTT Discovery.
 
-## Wersja 1.0.0
+## Wersja 1.1.0
 
 - odczytuje historię dwóch encji całkowitych z Home Assistant REST API,
 - po starcie subskrybuje `state_changed` przez Home Assistant WebSocket API,
@@ -23,6 +23,10 @@ Energy Ledger to aplikacja Home Assistant OS prowadząca na żywo magazyn wirtua
 - pobiera wersjonowany katalog taryfy przy uruchomieniu i zachowuje ostatnią poprawną kopię,
 - pozwala całkowicie zastąpić taryfę ręcznie,
 - publikuje stan, koszty, import strefowy i diagnostykę przez MQTT Discovery.
+- rozdziela opłatę jakościową od opłat OZE i kogeneracyjnej zgodnie z fakturą za wrzesień 2026,
+- nalicza OZE i kogenerację od całego importu, także od energii później pokrytej opustem,
+- publikuje wartości brutto zgodne ze sposobem naliczania i zaokrąglania faktury,
+- zachowuje dotychczasowe identyfikatory encji brutto.
 
 ## Instalacja
 
@@ -49,14 +53,15 @@ Przy pierwszym uruchomieniu aplikacja odtwarza bieżący miesiąc z historii Hom
 
 ## Taryfa i ceny
 
-Wbudowany katalog `tauron-g13-2026-regulated` obowiązuje od 1 lutego do 31 grudnia 2026 r. Zawiera:
+Wbudowany katalog `tauron-g13-2026-invoice-verified` obowiązuje od 1 lutego do 31 grudnia 2026 r. Stawki zostały potwierdzone fakturą TAURON wystawioną 2 października 2026 r. za wrzesień 2026 r. Katalog zawiera wartości netto i VAT 23%:
 
-- regulowane ceny sprzedaży energii TAURON Sprzedaż G13, powiększone o akcyzę 0,005 PLN/kWh i VAT 23%,
-- stawki zmienne dystrybucji G13 brutto,
-- opłatę jakościową, OZE i kogeneracyjną brutto,
+- ceny sprzedaży energii TAURON Sprzedaż G13,
+- stawki zmienne dystrybucji G13,
+- opłatę jakościową naliczaną od energii pozostałej po rozliczeniu opustu,
+- opłaty OZE i kogeneracyjną naliczane od całego importu,
 - stałą opłatę sieciową dla układu trójfazowego i abonament miesięczny.
 
-Domyślne `additional_fixed_monthly=29.58` odpowiada opłacie mocowej brutto dla zużycia powyżej 2800 kWh rocznie. Zmień je zgodnie z własnym progiem i umową. Opłatę handlową lub inne stałe składniki także można dodać w tym polu.
+Domyślne `additional_fixed_monthly=29.5815` odpowiada opłacie mocowej brutto 24,05 zł netto z faktury. Zmień je zgodnie z własnym progiem i umową. Opłatę handlową lub inne stałe składniki także można dodać w tym polu.
 
 Jeżeli masz ofertę handlową albo inną cenę niż taryfa regulowana, włącz `manual_prices_enabled` i wpisz wszystkie stawki brutto. W tym trybie katalog automatyczny nie wpływa na koszt.
 
@@ -64,7 +69,9 @@ Katalog jest pobierany wyłącznie przez HTTPS, ma limit rozmiaru i jest sprawdz
 
 ## Sposób przypisywania kosztu
 
-Import zużywa najpierw dodatni magazyn. Pozostała część tworzy niedobór w strefie G13 właściwej dla czasu zdarzenia. Późniejszy eksport pokrywa najstarszy niedobór, dlatego kwota do zapłaty może maleć jeszcze przed końcem miesiąca.
+Import zużywa najpierw dodatni magazyn. Pozostała część tworzy niedobór w strefie G13 właściwej dla czasu zdarzenia. Późniejszy eksport pokrywa najstarszy niedobór, dlatego koszt energii, zmiennej dystrybucji i opłaty jakościowej może maleć jeszcze przed końcem miesiąca.
+
+Opłaty OZE i kogeneracyjna są liczone od całej energii pobranej z sieci. Nie maleją po późniejszym eksporcie. Wartości netto i VAT są wewnętrznie zaokrąglane dla każdej pozycji oraz strefy tak jak na fakturze, a publikowany koszt brutto jest ich sumą.
 
 Wynik jest bieżącym oszacowaniem. Faktura operatora może różnić się przez zaokrąglenia, korekty odczytów, dodatkowe pozycje umowne albo inny sposób przypisania energii do stref. Historia zamkniętych miesięcy znajduje się w trwałym pliku stanu aplikacji.
 
@@ -74,9 +81,10 @@ Aplikacja tworzy między innymi:
 
 - Magazyn wirtualny,
 - Niepokryta energia,
-- Koszt energii w miesiącu,
-- Opłaty stałe w miesiącu,
-- Szacowana kwota miesiąca,
+- Koszt zmienny brutto,
+- Opłaty od pełnego importu brutto,
+- Opłaty stałe brutto,
+- Szacowana kwota brutto,
 - Import i eksport w miesiącu,
 - Import w trzech strefach G13,
 - Wersja taryfy,

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2
+
+- Dodano opcjonalną stałą korektę miesięcznej kwoty brutto w PLN. Puste pole oznacza 0, wartości ujemne obniżają wynik.
+- Korekta jest dodawana raz do końcowej kwoty każdego miesiąca, bez ponownego VAT i bez zmiany kWh, taryfy lub opłat.
+- Zapis zamkniętego miesiąca zachowuje zastosowaną korektę. Encja poprzedniego miesiąca uwzględnia ją i pokazuje osobno w atrybutach.
+- Dotychczasowe zamknięcia bez korekty są wczytywane z wartością 0.
+
 ## 1.2.1
 
 - Dodano jedną encję MQTT: szacowana kwota do zapłaty za poprzedni miesiąc, brutto z opłatami stałymi.

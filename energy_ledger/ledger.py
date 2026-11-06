@@ -43,6 +43,7 @@ class ClosedPeriod:
 	fixed_cost_pln: Decimal
 	import_kwh: Decimal
 	export_kwh: Decimal
+	bill_correction_pln: Decimal=ZERO
 
 	def to_dict(self) -> dict[str, str]:
 		return {
@@ -52,6 +53,7 @@ class ClosedPeriod:
 			"fixed_cost_pln": str(self.fixed_cost_pln),
 			"import_kwh": str(self.import_kwh),
 			"export_kwh": str(self.export_kwh),
+			"bill_correction_pln": str(self.bill_correction_pln),
 		}
 
 	@classmethod
@@ -63,6 +65,7 @@ class ClosedPeriod:
 			fixed_cost_pln=Decimal(value["fixed_cost_pln"]),
 			import_kwh=Decimal(value["import_kwh"]),
 			export_kwh=Decimal(value["export_kwh"]),
+			bill_correction_pln=Decimal(value.get("bill_correction_pln", "0")),
 		)
 
 
@@ -125,11 +128,12 @@ def _next_period(period: str) -> str:
 
 
 class EnergyLedger:
-	def __init__(self, discount: Decimal, rates: TariffRates, now: datetime | None=None, state: LedgerState | None=None):
+	def __init__(self, discount: Decimal, rates: TariffRates, now: datetime | None=None, state: LedgerState | None=None, monthly_bill_correction_pln: Decimal=ZERO):
 		if discount not in (Decimal("0.7"), Decimal("0.8")):
 			raise ValueError("Discount must be 0.7 or 0.8")
 		self.discount=discount
 		self.rates=rates
+		self.monthly_bill_correction_pln=monthly_bill_correction_pln
 		current=now or datetime.now(tz=WARSAW)
 		self.state=state or LedgerState(current_period=_period(current))
 
@@ -213,7 +217,7 @@ class EnergyLedger:
 
 	@property
 	def estimated_bill_gross(self) -> Decimal:
-		return self.estimated_bill_net+self.estimated_vat
+		return self.estimated_bill_net+self.estimated_vat+_money(self.monthly_bill_correction_pln)
 
 	@property
 	def variable_cost(self) -> Decimal:
@@ -324,6 +328,7 @@ class EnergyLedger:
 			fixed_cost_pln=self.fixed_cost_gross,
 			import_kwh=self.state.import_month_kwh,
 			export_kwh=self.state.export_month_kwh,
+			bill_correction_pln=_money(self.monthly_bill_correction_pln),
 		))
 		if self.state.balance_kwh < 0:
 			self.state.balance_kwh=ZERO
@@ -335,8 +340,8 @@ class EnergyLedger:
 		self.state.exports_by_zone={zone: ZERO for zone in G13Zone}
 
 	def to_dict(self) -> dict[str, Any]:
-		return {"discount": str(self.discount), "state": self.state.to_dict()}
+		return {"discount": str(self.discount), "state": self.state.to_dict(), "monthly_bill_correction_pln":str(self.monthly_bill_correction_pln)}
 
 	@classmethod
 	def from_dict(cls, value: dict[str, Any], rates: TariffRates) -> "EnergyLedger":
-		return cls(discount=Decimal(value["discount"]), rates=rates, state=LedgerState.from_dict(value["state"]))
+		return cls(discount=Decimal(value["discount"]), rates=rates, state=LedgerState.from_dict(value["state"]), monthly_bill_correction_pln=Decimal(value.get("monthly_bill_correction_pln", "0")))

@@ -1,6 +1,6 @@
 name: Energy Ledger
 description: Magazyn wirtualny prosumenta i bieżący koszt energii TAURON G13
-version: "1.2.1"
+version: "1.2.2"
 slug: energy-ledger
 url: "https://github.com/Wilk33/energy-ledger"
 init: false
@@ -16,6 +16,7 @@ options:
   grid_export_total_entity: null
   discount_percent: 80
   balance_correction_kwh: 0.0
+  monthly_bill_correction_pln: null
   history_days: 45
   tariff_update_enabled: true
   tariff_catalog_url: https://raw.githubusercontent.com/Wilk33/energy-ledger/main/energy-ledger/rootfs/usr/src/app/energy_ledger/data/tauron-g13.json
@@ -41,6 +42,7 @@ schema:
   grid_export_total_entity: str
   discount_percent: list(70|80)
   balance_correction_kwh: float
+  monthly_bill_correction_pln: float?
   history_days: int(1,730)
   tariff_update_enabled: bool
   tariff_catalog_url: url?

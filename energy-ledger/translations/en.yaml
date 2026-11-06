@@ -1,4 +1,5 @@
 configuration:
+  monthly_bill_correction_pln: {name: Fixed monthly gross bill adjustment, description: Amount in PLN added once to each monthly total. Empty means zero. Negative values reduce the total. No extra VAT. Save and restart after changing.}
   grid_import_total_entity: {name: Total import entity, description: Increasing total grid import meter in kWh.}
   grid_export_total_entity: {name: Total export entity, description: Increasing total grid export meter in kWh.}
   discount_percent: {name: Net-metering discount, description: Export credited to virtual storage - 80% or 70%.}

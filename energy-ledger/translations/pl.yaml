@@ -1,4 +1,5 @@
 configuration:
+  monthly_bill_correction_pln: {name: Stała korekta rachunku brutto, description: Kwota w PLN dodawana raz do końcowego wyniku każdego miesiąca. Puste pole oznacza 0. Wartość ujemna obniża koszt. Bez dodatkowego VAT. Po zmianie zapisz i uruchom dodatek ponownie.}
   grid_import_total_entity: {name: Encja całkowitego importu, description: Rosnący licznik całkowitej energii pobranej z sieci w kWh.}
   grid_export_total_entity: {name: Encja całkowitego eksportu, description: Rosnący licznik całkowitej energii oddanej do sieci w kWh.}
   discount_percent: {name: Opust, description: Część eksportu zapisywana w magazynie wirtualnym - 80% albo 70%.}

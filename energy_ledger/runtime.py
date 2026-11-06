@@ -112,6 +112,8 @@ class EnergyLedgerRuntime:
 		events=await self.home_assistant.history(start, now, self.config.import_entity, self.config.export_entity)
 		if not ledger_data and events:
 			self.ledger=EnergyLedger(self.config.discount, rates, now=events[0].occurred_at)
+		self.ledger.monthly_bill_correction_pln=self.config.monthly_bill_correction_pln
+		LOGGER.info("Stała korekta miesięcznej kwoty brutto: %s PLN",self.config.monthly_bill_correction_pln)
 		for event in events:
 			self.ledger.process_total(event.kind, event.value, event.occurred_at)
 		self.ledger.advance_to(now)

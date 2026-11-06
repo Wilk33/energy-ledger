@@ -100,10 +100,17 @@ Aplikacja tworzy między innymi:
 - Ostatnia aktualizacja.
 
 Kwota za poprzedni miesiąc to zapisane przy zamknięciu koszty zmienne i stałe brutto.
+Uwzględnia również zapisaną ręczną korektę rachunku `monthly_bill_correction_pln`.
 Dotyczy dokładnie poprzedniego miesiąca kalendarzowego w Europe/Warsaw. Atrybuty
 podają okres i oba składniki kosztu. Brak zamknięcia oznacza niedostępność encji,
 nie 0 zł. Zapisane starszym algorytmem zamknięcie zachowuje swoją dawną kwotę;
 nowa encja nie koryguje historycznych rachunków ani nie uwzględnia wpłat i nadpłat.
+
+Ustawienie „Stała korekta rachunku brutto” dodaje wskazaną kwotę PLN do końcowego
+wyniku każdego miesiąca, bez dodatkowego VAT. Domyślnie puste pole oznacza 0 zł.
+Wartość może być dodatnia lub ujemna; nie kumuluje się przy kolejnych odczytach.
+Po zmianie zapisz konfigurację i zrestartuj dodatek. Wcześniejsze zamknięcia
+zachowują poprzednio zapisaną korektę.
 
 ## Źródła
 

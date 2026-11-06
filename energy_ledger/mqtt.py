@@ -77,11 +77,12 @@ def state_payload(ledger: EnergyLedger, tariff_version: str, data_quality: str, 
 	previous_month=(updated_at.astimezone(WARSAW).date().replace(day=1)-timedelta(days=1)).strftime("%Y-%m")
 	previous=next((item for item in reversed(state.closed_periods) if item.period == previous_month),None)
 	return {
-		"previous_month_bill_pln":None if previous is None else float(previous.variable_cost_pln+previous.fixed_cost_pln),
+		"previous_month_bill_pln":None if previous is None else float(previous.variable_cost_pln+previous.fixed_cost_pln+previous.bill_correction_pln),
 		"previous_month_bill_details":{
 			"period":previous_month,
 			"variable_cost_gross_pln":None if previous is None else float(previous.variable_cost_pln),
 			"fixed_cost_gross_pln":None if previous is None else float(previous.fixed_cost_pln),
+			"correction_gross_pln":None if previous is None else float(previous.bill_correction_pln),
 			"source":"saved_month_close" if previous is not None else "missing",
 		},
 		"virtual_storage_kwh": float(state.balance_kwh),

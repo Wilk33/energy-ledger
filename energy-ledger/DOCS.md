@@ -19,11 +19,30 @@ Po uruchomieniu sprawdź dziennik. Stan pojawi się na urządzeniu Energy Ledger
 
 Encja „Szacowana kwota do zapłaty za poprzedni miesiąc” pokazuje sumę zapisanych
 kosztów zmiennych i stałych brutto za poprzedni miesiąc kalendarzowy Europe/Warsaw.
+Aplikacja dolicza również korektę brutto zapisaną przy zamknięciu miesiąca.
 Atrybuty zawierają okres, składniki kwoty oraz źródło saved_month_close.
 Brak zamknięcia tego miesiąca oznacza niedostępność, nie zerową fakturę.
 Restart i zmiana bieżących cen nie przeliczają zapisanego wyniku. Starsze zamknięcia
 zachowują kwoty obliczone wcześniejszym algorytmem. To szacunek kosztu energii,
 bez rozliczenia wpłat, nadpłat i zaległości na koncie sprzedawcy.
+
+## Stała korekta rachunku brutto
+
+Opcja `monthly_bill_correction_pln` to ręcznie wpisywana kwota w PLN, dodawana
+do ostatecznego kosztu każdego miesiąca. Domyślnie pole jest puste, co oznacza 0 zł.
+Wartość dodatnia zwiększa wynik, ujemna go obniża. Jest to kwota brutto, bez
+dodatkowego naliczania VAT, a nie procent ani mnożnik energii.
+
+Przykład: wyliczenie 125,16 zł i korekta 5,94 zł dają 131,10 zł.
+Korekta nie kumuluje się przy odczytach. Nie zeruje się automatycznie po miesiącu.
+Działa z taryfą z katalogu oraz cenami ręcznymi. Zapisz ustawienia i uruchom
+dodatek ponownie, aby zastosować nową wartość. W YAML używaj kropki dziesiętnej.
+
+Kwoty zapisanych zamkniętych miesięcy nie zmieniają się po edycji ustawienia.
+Starsze zamknięcia, bez zapisanej korekty, mają korektę 0 zł. Nowe zamknięcie
+zapisuje zastosowaną kwotę w `bill_correction_pln`; encja poprzedniego miesiąca
+pokazuje ją w atrybucie `correction_gross_pln`. Przy odzyskiwaniu niezamkniętych
+miesięcy z historii stosowane jest aktualne ustawienie korekty.
 
 ## Aktualizacja 1.2.0
 

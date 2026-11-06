@@ -40,6 +40,7 @@ class AppConfig:
 	manual_prices_enabled: bool
 	manual_rates: TariffRates
 	additional_fixed_monthly: Decimal
+	monthly_bill_correction_pln: Decimal
 	mqtt_base_topic: str
 	mqtt_discovery_prefix: str
 	device_name: str
@@ -47,6 +48,8 @@ class AppConfig:
 
 	@classmethod
 	def from_options(cls, options: dict[str, Any]) -> "AppConfig":
+		raw_correction=options.get("monthly_bill_correction_pln")
+		bill_correction="0" if raw_correction is None or not str(raw_correction).strip() else str(raw_correction).strip().replace(",", ".")
 		import_entity=_entity(options, "grid_import_total_entity")
 		export_entity=_entity(options, "grid_export_total_entity")
 		if import_entity == export_entity:
@@ -107,6 +110,7 @@ class AppConfig:
 			manual_prices_enabled=manual_prices_enabled,
 			manual_rates=manual_rates,
 			additional_fixed_monthly=_decimal(options, "additional_fixed_monthly"),
+			monthly_bill_correction_pln=_decimal({"monthly_bill_correction_pln":bill_correction}, "monthly_bill_correction_pln"),
 			mqtt_base_topic=str(options.get("mqtt_base_topic", "energy_ledger")).strip(" /"),
 			mqtt_discovery_prefix=str(options.get("mqtt_discovery_prefix", "homeassistant")).strip(" /"),
 			device_name=str(options.get("device_name", "Energy Ledger")).strip() or "Energy Ledger",

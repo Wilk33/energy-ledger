@@ -15,6 +15,16 @@ Aplikacja publikuje koszty brutto. Dotychczasowe identyfikatory encji kosztowych
 
 Po uruchomieniu sprawdź dziennik. Stan pojawi się na urządzeniu Energy Ledger przez MQTT Discovery.
 
+## Kwota za poprzedni miesiąc
+
+Encja „Szacowana kwota do zapłaty za poprzedni miesiąc” pokazuje sumę zapisanych
+kosztów zmiennych i stałych brutto za poprzedni miesiąc kalendarzowy Europe/Warsaw.
+Atrybuty zawierają okres, składniki kwoty oraz źródło saved_month_close.
+Brak zamknięcia tego miesiąca oznacza niedostępność, nie zerową fakturę.
+Restart i zmiana bieżących cen nie przeliczają zapisanego wyniku. Starsze zamknięcia
+zachowują kwoty obliczone wcześniejszym algorytmem. To szacunek kosztu energii,
+bez rozliczenia wpłat, nadpłat i zaległości na koncie sprzedawcy.
+
 ## Aktualizacja 1.2.0
 
 Eksport rozliczany jest najpierw w swojej strefie, a nadwyżka w pozostałych według malejącej zmiennej stawki dystrybucji. Przy aktualizacji eksport strefowy jest odtwarzany z historii tylko po uzgodnieniu sumy ze stanem aplikacji. `legacy-zone-estimate` oznacza brak danych do pełnego przeliczenia bieżącego miesiąca; od następnego miesiąca działa nowe rozliczenie.

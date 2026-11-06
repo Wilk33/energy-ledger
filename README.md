@@ -92,11 +92,18 @@ Aplikacja tworzy między innymi:
 - Opłaty od pełnego importu brutto,
 - Opłaty stałe brutto,
 - Szacowana kwota brutto,
+- Szacowana kwota do zapłaty za poprzedni miesiąc,
 - Import i eksport w miesiącu,
 - Import w trzech strefach G13,
 - Wersja taryfy,
 - Jakość danych,
 - Ostatnia aktualizacja.
+
+Kwota za poprzedni miesiąc to zapisane przy zamknięciu koszty zmienne i stałe brutto.
+Dotyczy dokładnie poprzedniego miesiąca kalendarzowego w Europe/Warsaw. Atrybuty
+podają okres i oba składniki kosztu. Brak zamknięcia oznacza niedostępność encji,
+nie 0 zł. Zapisane starszym algorytmem zamknięcie zachowuje swoją dawną kwotę;
+nowa encja nie koryguje historycznych rachunków ani nie uwzględnia wpłat i nadpłat.
 
 ## Źródła
 

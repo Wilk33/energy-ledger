@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+
+- Dodano jedną encję MQTT: szacowana kwota do zapłaty za poprzedni miesiąc, brutto z opłatami stałymi.
+- Encja korzysta z zapisanego zamknięcia miesiąca; brak rekordu oznacza niedostępność zamiast rachunku 0 zł.
+- Atrybuty encji zawierają okres oraz składniki zmienne i stałe brutto. Zmiana bieżącej taryfy nie przelicza zapisanych zamknięć.
+- Dodano analizę wpływu rozdzielczości licznika i narzędzie porównujące przydział przyrostów do stref. Eksperymentalny podział czasowy nie zmienia działania aplikacji.
+
 ## 1.1.0
 
 - Stawki G13 zweryfikowane na fakturze TAURON za wrzesień 2026.

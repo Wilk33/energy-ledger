@@ -1,3 +1,3 @@
 """Energy Ledger - live prosumer energy accounting for Home Assistant."""
 
-__version__="1.2.0"
+__version__="1.2.1"

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 import json
 
 from . import __version__
 from .ledger import EnergyLedger
-from .tariff import G13Zone
+from .tariff import G13Zone, WARSAW
 
 
 @dataclass(frozen=True)
@@ -23,6 +23,7 @@ SENSORS={
 	"current_full_import_fees_pln": ("Opłaty od pełnego importu brutto", "PLN", "monetary", None),
 	"current_fixed_cost_pln": ("Opłaty stałe brutto", "PLN", "monetary", None),
 	"estimated_bill_pln": ("Szacowana kwota brutto", "PLN", "monetary", None),
+	"previous_month_bill_pln": ("Szacowana kwota do zapłaty za poprzedni miesiąc", "PLN", "monetary", None),
 	"import_month_kwh": ("Import w miesiącu", "kWh", "energy", "total_increasing"),
 	"export_month_kwh": ("Eksport w miesiącu", "kWh", "energy", "total_increasing"),
 	"import_morning_peak_kwh": ("Import G13 szczyt przedpołudniowy", "kWh", "energy", "total_increasing"),
@@ -57,13 +58,32 @@ def discovery_messages(prefix: str, base_topic: str, device_name: str) -> list[D
 			payload["state_class"]=state_class
 		if key == "data_quality":
 			payload["options"]=["ok", "manual-prices", "catalog-fallback", "stale", "legacy-zone-estimate"]
+		if key == "previous_month_bill_pln":
+			payload.pop("availability_topic")
+			payload["suggested_display_precision"]=2
+			payload["availability_mode"]="all"
+			payload["availability"]=[
+				{"topic":f"{base_topic}/availability","payload_available":"online","payload_not_available":"offline"},
+				{"topic":f"{base_topic}/state","value_template":"{{ 'online' if value_json.previous_month_bill_pln is defined and value_json.previous_month_bill_pln is not none else 'offline' }}","payload_available":"online","payload_not_available":"offline"},
+			]
+			payload["json_attributes_topic"]=f"{base_topic}/state"
+			payload["json_attributes_template"]="{{ value_json.previous_month_bill_details | tojson }}"
 		messages.append(DiscoveryMessage(f"{prefix}/sensor/energy_ledger/{key}/config", payload))
 	return messages
 
 
 def state_payload(ledger: EnergyLedger, tariff_version: str, data_quality: str, updated_at: datetime) -> dict[str, Any]:
 	state=ledger.state
+	previous_month=(updated_at.astimezone(WARSAW).date().replace(day=1)-timedelta(days=1)).strftime("%Y-%m")
+	previous=next((item for item in reversed(state.closed_periods) if item.period == previous_month),None)
 	return {
+		"previous_month_bill_pln":None if previous is None else float(previous.variable_cost_pln+previous.fixed_cost_pln),
+		"previous_month_bill_details":{
+			"period":previous_month,
+			"variable_cost_gross_pln":None if previous is None else float(previous.variable_cost_pln),
+			"fixed_cost_gross_pln":None if previous is None else float(previous.fixed_cost_pln),
+			"source":"saved_month_close" if previous is not None else "missing",
+		},
 		"virtual_storage_kwh": float(state.balance_kwh),
 		"uncovered_energy_kwh": float(state.uncovered_kwh),
 		"current_variable_cost_pln": float(ledger.variable_cost_gross),

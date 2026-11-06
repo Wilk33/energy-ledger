@@ -55,3 +55,53 @@ Aktualizacja zachowuje istniejące rekordy. Eksport strefowy starego miesiąca
 jest odtwarzany wyłącznie po uzgodnieniu sumy i końcowego stanu licznika.
 Gdy to niemożliwe, jakość danych przyjmuje legacy-zone-estimate do nowego miesiąca.
 Nie przeliczamy automatycznie zamkniętych miesięcy bez ich danych źródłowych.
+
+## Rozdzielczość 0,1 kWh i granice stref
+
+Użytkownik potwierdził, że źródłowe liczniki Deye mają rozdzielczość 0,1 kWh
+i zliczają całość, bez osobnych liczników strefowych. Przyrost odczytany po granicy
+stref może zawierać energię z poprzedniej strefy. To rzeczywiste ograniczenie
+przypisania energii, nawet przy poprawnym kalendarzu G13.
+
+Przykład: zmiana 100,0 na 100,1 kWh zarejestrowana chwilę po 13:00 nie dowodzi,
+że całe 0,1 kWh przepłynęło po 13:00. Nie dowodzi też równomiernego przepływu
+od ostatniej zmiany licznika. Przy małej mocy odstęp pomiędzy zmianami może być
+długi. Opóźnienia odczytu mogą dodatkowo łączyć kilka kroków licznika.
+
+Samo przesuwanie przyrostów między strefami zachowuje miesięczny import i eksport.
+Nie tłumaczy więc całych różnic 266,7 wobec 270 kWh importu oraz 181,5 wobec
+176 kWh eksportu. Nie utożsamiamy rozdzielczości 0,1 kWh z dokładnością pomiarową.
+CSV nie obejmuje ostatnich około 4,5 minuty miesiąca, a także nie pozwala
+odtworzyć bilansowania godzinowego operatora.
+
+Narzędzie `tools/compare_zone_allocation.py` porównuje dwa warianty na tym samym
+CSV: cały przyrost w strefie publikacji oraz równomierny podział czasu pomiędzy
+zmianami wartości, tylko dla odstępów do 30 minut przecinających granicę strefy.
+Pozostałe przyrosty pozostają w strefie końcowego odczytu. Jest to eksperyment,
+nie algorytm zastosowany w aplikacji. Kwoty uwzględniają opłatę mocową z faktury.
+
+| Wartość | Strefa publikacji | Podział czasowy do 30 min | Faktura |
+| --- | ---: | ---: | ---: |
+| Import rano kWh | 50,80 | 50,14 | 50 |
+| Import po południu kWh | 1,50 | 1,50 | 3 |
+| Import pozostałe kWh | 214,40 | 215,06 | 217 |
+| Eksport rano kWh | 42,20 | 44,61 | 44 |
+| Eksport po południu kWh | 3,60 | 3,29 | 3 |
+| Eksport pozostałe kWh | 135,70 | 133,59 | 129 |
+| Kwota brutto zł | 125,16 | 124,51 | 131,10 |
+
+Podzielono 31 przyrostów o łącznej energii 10,8 kWh. To suma dzielonych
+przyrostów, nie ilość energii przesunięta między strefami. Dla 72 odstępów
+z różnymi strefami na końcach czas był dłuższy niż 30 minut. Sam wybór limitu
+30 minut jest założeniem eksperymentu, nie parametrem licznika ani operatora.
+
+Wniosek: prosty podział czasowy poprawia niektóre ilości strefowe, ale zwiększa
+różnicę kwoty do faktury z 5,94 do 6,59 zł. Nie ma podstaw, aby na tej próbce
+uznać go za lepszy algorytm produkcyjny. Nie dobieramy przesunięć do oczekiwanej
+kwoty faktury.
+
+Do dokładniejszego przydziału potrzebna jest historia surowych liczników z czasem
+pomiaru oraz, jeśli dostępna, moc sieci. Można wtedy szacować udział każdej
+strefy na podstawie przepływu mocy i normalizować udziały do faktycznego przyrostu
+licznika. Import i eksport trzeba traktować oddzielnie. To nadal estymacja;
+zgodność z fakturą wymaga również uzgodnienia sum i zasad bilansowania operatora.

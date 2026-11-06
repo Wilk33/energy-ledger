@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3
+
+- Poprawiono aktualizację dodatku z wersji 1.2.1: pusta korekta rachunku jest opcjonalna w schemacie Supervisora. Usunięto domyślne `null`, które Supervisor traktował jako brak wartości wymaganej i odrzucał aktualizację.
+
 ## 1.2.2
 
 - Dodano opcjonalną stałą korektę miesięcznej kwoty brutto w PLN. Puste pole oznacza 0, wartości ujemne obniżają wynik.

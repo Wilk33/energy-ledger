@@ -19,8 +19,14 @@ class PackagingTests(unittest.TestCase):
 	def test_addon_version_matches_python_package(self):
 		config=(ROOT / "energy-ledger" / "config.yaml").read_text(encoding="utf-8")
 		package=(ROOT / "energy_ledger" / "__init__.py").read_text(encoding="utf-8")
-		self.assertIn('version: "1.2.2"', config)
-		self.assertIn('__version__="1.2.2"', package)
+		self.assertIn('version: "1.2.3"', config)
+		self.assertIn('__version__="1.2.3"', package)
+
+	def test_optional_bill_correction_has_no_null_default(self):
+		config=(ROOT / "energy-ledger" / "config.yaml").read_text(encoding="utf-8")
+		options,schema=config.split("\nschema:\n",1)
+		self.assertNotIn("monthly_bill_correction_pln:",options)
+		self.assertIn("monthly_bill_correction_pln: float?",schema)
 
 	def test_battery_controller_runtime_copy_matches_tested_source(self):
 		source=ROOT / "battery_charge_controller"

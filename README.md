@@ -9,7 +9,12 @@ Repozytorium zawiera dwie niezależne aplikacje Home Assistant OS:
 
 Energy Ledger to aplikacja Home Assistant OS prowadząca na żywo magazyn wirtualny prosumenta i szacowany koszt energii w taryfie TAURON G13. Nie ma Ingressu ani własnego panelu. Konfiguracja znajduje się w ustawieniach aplikacji, a wyniki pojawiają się jako encje MQTT Discovery.
 
-## Wersja 1.1.0
+## Wersja 1.2.0
+
+Rozliczenie strefowe najpierw kompensuje import eksportem tej samej strefy.
+Nadwyżka pokrywa pozostałe strefy według malejącej stawki dystrybucji.
+Od października profil fakturowy uwzględnia abonament 0 zł i stałą sieciową
+10,86 zł netto. Raport porównania: [październik 2026](docs/october-2026-reconciliation.md).
 
 - odczytuje historię dwóch encji całkowitych z Home Assistant REST API,
 - po starcie subskrybuje `state_changed` przez Home Assistant WebSocket API,
@@ -69,7 +74,9 @@ Katalog jest pobierany wyłącznie przez HTTPS, ma limit rozmiaru i jest sprawdz
 
 ## Sposób przypisywania kosztu
 
-Import zużywa najpierw dodatni magazyn. Pozostała część tworzy niedobór w strefie G13 właściwej dla czasu zdarzenia. Późniejszy eksport pokrywa najstarszy niedobór, dlatego koszt energii, zmiennej dystrybucji i opłaty jakościowej może maleć jeszcze przed końcem miesiąca.
+Import i eksport są sumowane osobno w strefach G13. Eksport po opuście pokrywa najpierw import tej samej strefy w miesiącu. Nadwyżka i dostępny magazyn pokrywają pozostałe niedobory według malejącej stawki zmiennej dystrybucji. Koszt jest przeliczany po każdym przyroście, niezależnie od kolejności importu i eksportu.
+
+Starszy stan nie zawiera eksportu strefowego. Aplikacja próbuje odtworzyć go z historii HA i sprawdza zgodność z zapisanym eksportem. Niepełna historia powoduje oznaczenie `legacy-zone-estimate`; nowy miesiąc rozpoczyna pełne rozliczenie strefowe. Zamknięte miesiące pozostają zapisane bez zmian.
 
 Opłaty OZE i kogeneracyjna są liczone od całej energii pobranej z sieci. Nie maleją po późniejszym eksporcie. Wartości netto i VAT są wewnętrznie zaokrąglane dla każdej pozycji oraz strefy tak jak na fakturze, a publikowany koszt brutto jest ich sumą.
 

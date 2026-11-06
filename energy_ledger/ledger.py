@@ -77,6 +77,7 @@ class LedgerState:
 	imports_by_zone: dict[G13Zone, Decimal]=field(default_factory=lambda: {zone: ZERO for zone in G13Zone})
 	deficit_lots: list[DeficitLot]=field(default_factory=list)
 	closed_periods: list[ClosedPeriod]=field(default_factory=list)
+	exports_by_zone: dict[G13Zone, Decimal] | None=field(default_factory=lambda: {zone: ZERO for zone in G13Zone})
 
 	@property
 	def uncovered_kwh(self) -> Decimal:
@@ -93,6 +94,7 @@ class LedgerState:
 			"imports_by_zone": {key.value: str(value) for key,value in self.imports_by_zone.items()},
 			"deficit_lots": [lot.to_dict() for lot in self.deficit_lots],
 			"closed_periods": [period.to_dict() for period in self.closed_periods],
+			"exports_by_zone": None if self.exports_by_zone is None else {zone.value: str(kwh) for zone,kwh in self.exports_by_zone.items()},
 		}
 
 	@classmethod
@@ -107,6 +109,7 @@ class LedgerState:
 			imports_by_zone={zone: Decimal(value.get("imports_by_zone", {}).get(zone.value, "0")) for zone in G13Zone},
 			deficit_lots=[DeficitLot.from_dict(item) for item in value.get("deficit_lots", [])],
 			closed_periods=[ClosedPeriod.from_dict(item) for item in value.get("closed_periods", [])],
+			exports_by_zone=None if value.get("exports_by_zone") is None else {zone: Decimal(value["exports_by_zone"][zone.value]) for zone in G13Zone},
 		)
 
 
@@ -246,7 +249,7 @@ class EnergyLedger:
 		if kind is MeterKind.IMPORT:
 			self._apply_import(delta, g13_zone(occurred_at))
 		else:
-			self._apply_export(delta)
+			self._apply_export(delta, g13_zone(occurred_at))
 		return True
 
 	def _apply_import(self, delta: Decimal, zone: G13Zone):
@@ -257,12 +260,32 @@ class EnergyLedger:
 		self.state.imports_by_zone[zone]+=delta
 		if uncovered > 0:
 			self.state.deficit_lots.append(DeficitLot(zone, uncovered))
+		self.reconcile_zones()
 
-	def _apply_export(self, delta: Decimal):
+	def _apply_export(self, delta: Decimal, zone: G13Zone=G13Zone.OTHER):
 		credit=delta*self.discount
 		self.state.balance_kwh+=credit
 		self.state.export_month_kwh+=delta
 		self._cover_deficit(credit)
+		if self.state.exports_by_zone is not None:
+			self.state.exports_by_zone[zone]+=delta
+		self.reconcile_zones()
+
+	def reconcile_zones(self):
+		if self.state.exports_by_zone is None:
+			return
+		# Recompute the whole month: credits first cover their own tariff zone.
+		net={zone:self.state.imports_by_zone[zone]-self.state.exports_by_zone[zone]*self.discount for zone in G13Zone}
+		opening=self.state.balance_kwh+self.state.import_month_kwh-self.state.export_month_kwh*self.discount
+		if opening < 0:
+			net[G13Zone.OTHER]-=opening
+		credit=max(opening,ZERO)+sum((max(-value,ZERO) for value in net.values()),ZERO)
+		deficits={zone:max(value,ZERO) for zone,value in net.items()}
+		for zone in sorted(G13Zone,key=lambda item:self.rates.distribution[item],reverse=True):
+			covered=min(credit,deficits[zone])
+			deficits[zone]-=covered
+			credit-=covered
+		self.state.deficit_lots=[DeficitLot(zone,kwh) for zone,kwh in deficits.items() if kwh > 0]
 
 	def _cover_deficit(self, credit: Decimal):
 		remaining=credit
@@ -285,6 +308,7 @@ class EnergyLedger:
 			new_deficit=max(-self.state.balance_kwh, ZERO)-deficit_before
 			if new_deficit > 0:
 				self.state.deficit_lots.append(DeficitLot(negative_zone, new_deficit))
+		self.reconcile_zones()
 
 	def advance_to(self, value: datetime):
 		target=_period(value)
@@ -308,6 +332,7 @@ class EnergyLedger:
 		self.state.export_month_kwh=ZERO
 		self.state.imports_by_zone={zone: ZERO for zone in G13Zone}
 		self.state.deficit_lots=[]
+		self.state.exports_by_zone={zone: ZERO for zone in G13Zone}
 
 	def to_dict(self) -> dict[str, Any]:
 		return {"discount": str(self.discount), "state": self.state.to_dict()}

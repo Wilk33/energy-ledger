@@ -40,7 +40,7 @@ class MqttAdapterTests(unittest.TestCase):
 		self.assertGreaterEqual(len(messages), 10)
 		self.assertTrue(all(message.payload["state_topic"] == "energy_ledger/state" for message in messages))
 		self.assertEqual(len({message.payload["unique_id"] for message in messages}), len(messages))
-		self.assertTrue(all(message.payload["device"]["sw_version"] == "1.1.0" for message in messages))
+		self.assertTrue(all(message.payload["device"]["sw_version"] == "1.2.0" for message in messages))
 
 	def test_state_payload_exposes_live_signed_balance_and_costs(self):
 		zero={zone: Decimal("0") for zone in G13Zone}

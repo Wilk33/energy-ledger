@@ -16,7 +16,7 @@ from .catalog_update import update_catalog
 from .config import AppConfig
 from .correction import CorrectionCoordinator
 from .ha import HomeAssistantClient
-from .ledger import EnergyLedger
+from .ledger import EnergyLedger, MeterKind
 from .mqtt import MqttPublisher, state_payload
 from .storage import JsonStateStore
 from .supervisor import SupervisorClient
@@ -26,6 +26,25 @@ from .tariff import TariffRates, WARSAW
 LOGGER=logging.getLogger(__name__)
 PACKAGE_DIR=Path(__file__).resolve().parent
 BUILTIN_CATALOG=PACKAGE_DIR / "data" / "tauron-g13.json"
+
+
+def restore_export_zones(ledger, events, start):
+	"""Only accept a reconstruction matching the persisted export total and cursor."""
+	cursor=ledger.state.last_event_at.get("export")
+	if cursor is None:
+		return False
+	end=datetime.fromisoformat(cursor)
+	replay=EnergyLedger(ledger.discount,ledger.rates,now=start)
+	for event in sorted(events,key=lambda item:item.occurred_at):
+		if event.kind is MeterKind.EXPORT and event.occurred_at <= end:
+			replay.process_total(event.kind,event.value,max(event.occurred_at,start))
+	if replay.state.export_month_kwh != ledger.state.export_month_kwh:
+		return False
+	if replay.state.baselines.get("export") != ledger.state.baselines.get("export"):
+		return False
+	ledger.state.exports_by_zone=replay.state.exports_by_zone
+	ledger.reconcile_zones()
+	return True
 
 
 def history_start(ledger_data: dict[str, Any], now: datetime, history_days: int) -> datetime:
@@ -79,6 +98,16 @@ class EnergyLedgerRuntime:
 		else:
 			self.ledger=EnergyLedger(self.config.discount, rates)
 		now=datetime.now(timezone.utc)
+		if self.ledger.state.exports_by_zone is None:
+			month_start=datetime.fromisoformat(self.ledger.state.current_period+"-01").replace(tzinfo=WARSAW)
+			try:
+				zone_events=await self.home_assistant.history(month_start,now,self.config.import_entity,self.config.export_entity)
+				if not restore_export_zones(self.ledger,zone_events,month_start):
+					LOGGER.warning("Niepełna historia eksportu: rozliczenie strefowe niedostępne do następnego miesiąca")
+				else:
+					LOGGER.info("Odtworzono eksport strefowy dla %s",self.ledger.state.current_period)
+			except Exception as error:
+				LOGGER.warning("Nie można odtworzyć eksportu strefowego: %s",error)
 		start=history_start(ledger_data or {}, now, self.config.history_days)
 		events=await self.home_assistant.history(start, now, self.config.import_entity, self.config.export_entity)
 		if not ledger_data and events:
@@ -122,7 +151,9 @@ class EnergyLedgerRuntime:
 	def publish(self):
 		if self.mqtt is None or self.ledger is None:
 			return
-		self.mqtt.publish_state(state_payload(self.ledger, self.tariff_version, self.data_quality, datetime.now(timezone.utc)))
+		quality=self.data_quality if self.ledger.state.exports_by_zone is not None else "legacy-zone-estimate"
+		LOGGER.debug("Rozliczenie %s: import=%s, eksport=%s, niedobory=%s, zmienne=%s PLN, stałe=%s PLN, razem=%s PLN, jakość=%s",self.ledger.state.current_period,self.ledger.state.imports_by_zone,self.ledger.state.exports_by_zone,self.ledger._deficit_by_zone,self.ledger.variable_cost_gross,self.ledger.fixed_cost_gross,self.ledger.estimated_bill_gross,quality)
+		self.mqtt.publish_state(state_payload(self.ledger, self.tariff_version, quality, datetime.now(timezone.utc)))
 
 	async def run(self):
 		await self.initialize()

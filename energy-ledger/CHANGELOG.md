@@ -18,3 +18,11 @@
 - Jednorazowa korekta odporna na restart.
 - Automatyczny katalog TAURON i pełny tryb cen ręcznych.
 - Encje MQTT Discovery bez Ingressu.
+
+## 1.2.0
+
+- Poprawiono rozliczanie eksportu: najpierw własna strefa, potem pozostałe według stawki dystrybucji zamiast FIFO.
+- Dodano trwały eksport strefowy i kontrolowane odtworzenie go z historii przy aktualizacji.
+- Dodano jakość legacy-zone-estimate dla miesiąca bez pełnej historii strefowej.
+- Dodano październikowy profil fakturowy z abonamentem 0 zł i stałą sieciową 10,86 zł netto.
+- Dodano regresję pozycji faktury na 131,10 zł brutto i analizę różnic pomiarowych.

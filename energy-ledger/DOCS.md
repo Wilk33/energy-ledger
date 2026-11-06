@@ -14,3 +14,11 @@ Jeżeli ceny Twojej umowy różnią się od wbudowanej taryfy, włącz `manual_p
 Aplikacja publikuje koszty brutto. Dotychczasowe identyfikatory encji kosztowych pozostają bez zmian.
 
 Po uruchomieniu sprawdź dziennik. Stan pojawi się na urządzeniu Energy Ledger przez MQTT Discovery.
+
+## Aktualizacja 1.2.0
+
+Eksport rozliczany jest najpierw w swojej strefie, a nadwyżka w pozostałych według malejącej zmiennej stawki dystrybucji. Przy aktualizacji eksport strefowy jest odtwarzany z historii tylko po uzgodnieniu sumy ze stanem aplikacji. `legacy-zone-estimate` oznacza brak danych do pełnego przeliczenia bieżącego miesiąca; od następnego miesiąca działa nowe rozliczenie.
+
+Profil fakturowy od października zawiera stałą sieciową 10,86 zł netto i abonament 0 zł, zgodnie z przekazaną fakturą. Opłata mocowa pozostaje w `additional_fixed_monthly` (29,5815 zł brutto przed zaokrągleniem). Inne umowy mogą wymagać własnych stawek. W trybie ręcznym aktualizacja katalogu nie zmienia cen.
+
+Poprawność kalkulatora nie oznacza zgodności odczytów falownika z godzinowo bilansowanymi odczytami operatora. Wartości pozostają brutto. Poziom DEBUG pokazuje import, eksport i niedobory w każdej strefie oraz składniki kwoty.

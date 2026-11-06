@@ -56,7 +56,7 @@ def discovery_messages(prefix: str, base_topic: str, device_name: str) -> list[D
 		if state_class:
 			payload["state_class"]=state_class
 		if key == "data_quality":
-			payload["options"]=["ok", "manual-prices", "catalog-fallback", "stale"]
+			payload["options"]=["ok", "manual-prices", "catalog-fallback", "stale", "legacy-zone-estimate"]
 		messages.append(DiscoveryMessage(f"{prefix}/sensor/energy_ledger/{key}/config", payload))
 	return messages
 

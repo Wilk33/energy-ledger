@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 import os
 import signal
 from datetime import datetime, timezone
@@ -59,7 +60,10 @@ class BatteryChargeRuntime:
 	@property
 	def watched_entities(self) -> set[str]:
 		entities=self.config.entities
-		return {entities.battery_soc, entities.grid_charge, entities.prog5_time, *entities.capacity, *entities.charge}
+		watched={entities.battery_soc, entities.grid_charge, entities.prog5_time, *entities.capacity, *entities.charge}
+		if self.config.forecast_condition_enabled and self.config.forecast_entity:
+			watched.add(self.config.forecast_entity)
+		return watched
 
 	def _prog5_value(self, now: datetime) -> str:
 		season=season_for(now.date(), self.config)
@@ -80,6 +84,8 @@ class BatteryChargeRuntime:
 		self.mqtt.publish_durations(None, None)
 		missing=[]
 		for entity_id in sorted(self.watched_entities):
+			if entity_id == self.config.forecast_entity and entity_id != self.config.entities.battery_soc:
+				continue
 			try:
 				await self.home_assistant.get_state(entity_id)
 			except EntityNotFoundError:
@@ -94,6 +100,22 @@ class BatteryChargeRuntime:
 		await self._sync_prog5(local)
 		await self._reconcile_startup(local)
 		self.state=ControllerState.IDLE if self.active_segment is None else self._charging_state(self.active_segment)
+
+	async def _forecast_blocks_night(self) -> bool:
+		if not self.config.forecast_condition_enabled:
+			return False
+		try:
+			raw=await self.home_assistant.get_state(self.config.forecast_entity)
+			forecast=float(str(raw).strip().replace(",", "."))
+			if not math.isfinite(forecast) or forecast < 0:
+				raise ValueError("invalid energy forecast")
+		except (EntityNotFoundError, ValueError, TypeError, aiohttp.ClientError, asyncio.TimeoutError) as error:
+			LOGGER.warning("Prognoza %s niedostępna lub błędna (%s) - obowiązują standardowe progi SOC",self.config.forecast_entity,error)
+			return False
+		threshold=self.settings.settings.night_forecast_threshold
+		blocked=forecast >= threshold
+		LOGGER.info("Warunek nocnej prognozy: encja=%s, produkcja=%s kWh, próg=%s kWh, blokada=%s",self.config.forecast_entity,forecast,threshold,blocked)
+		return blocked
 
 	def _charging_state(self, segment: Segment) -> ControllerState:
 		return ControllerState.CHARGING_NIGHT if segment is Segment.NIGHT else ControllerState.CHARGING_DAY
@@ -235,6 +257,11 @@ class BatteryChargeRuntime:
 			enabled=settings.night_enabled if segment is Segment.NIGHT else settings.day_enabled
 			model=self.config.night if segment is Segment.NIGHT else self.config.day
 			decision=evaluate_segment(segment=segment, now=local, window=window, soc=soc, threshold=threshold, target=target, enabled=enabled, active=False, model=model)
+			if segment is Segment.NIGHT and decision.action in (DecisionAction.START, DecisionAction.WAIT) and await self._forecast_blocks_night():
+				LOGGER.info("Ładowanie nocne wstrzymane przez prognozę, SOC=%s, próg SOC=%s, cel=%s",soc,threshold,target)
+				self.state=ControllerState.WAITING_NIGHT
+				self.mqtt.publish_durations(None, None)
+				return
 			LOGGER.info("Decyzja %s: %s, SOC=%s, próg=%s, cel=%s", segment.value, decision.action.value, soc, threshold, target)
 			if decision.action is DecisionAction.START:
 				await self.executor.start_charge(segment, target)
@@ -337,7 +364,7 @@ async def async_main():
 		home_assistant=HomeAssistantClient(session, token)
 		executor=CommandExecutor(home_assistant, config)
 		commands=asyncio.Queue()
-		mqtt=MqttController(await supervisor.mqtt_service(), config.mqtt_base_topic, config.mqtt_discovery_prefix, config.device_name, asyncio.get_running_loop(), commands)
+		mqtt=MqttController(await supervisor.mqtt_service(), config.mqtt_base_topic, config.mqtt_discovery_prefix, config.device_name, asyncio.get_running_loop(), commands, config.forecast_condition_enabled)
 		mqtt.connect()
 		runtime=BatteryChargeRuntime(config, home_assistant, executor, mqtt, coordinator)
 		loop=asyncio.get_running_loop()

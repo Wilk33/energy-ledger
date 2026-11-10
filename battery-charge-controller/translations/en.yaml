@@ -1,4 +1,6 @@
 configuration:
+  forecast_condition_enabled: {name: Night charging forecast condition, description: When enabled configure an energy forecast sensor in kWh. Night start requires forecast below the production threshold slider. Missing data uses standard SOC rules.}
+  forecast_entity: {name: Production forecast entity, description: Optional energy forecast sensor in kWh. Required when the forecast condition is enabled. Select the forecast for the day following overnight charging. Save and restart after changes.}
   battery_soc_entity: {name: Battery SOC entity, description: Original Deye inverter battery SOC sensor.}
   prog1_capacity_entity: {name: Prog1 Capacity, description: Program 1 capacity used for night charging.}
   prog2_capacity_entity: {name: Prog2 Capacity, description: Program 2 capacity reset after charging.}

@@ -16,6 +16,35 @@ Aplikacja tworzy dokładnie:
 - sensor czasu do planowanego startu,
 - sensor czasu do twardego końca okna.
 
+Przy włączonym warunku prognozy powstaje dodatkowy suwak „Nocny próg prognozy produkcji”.
+
+## Opcjonalny warunek prognozy produkcji
+
+W konfiguracji włącz `forecast_condition_enabled` i podaj `forecast_entity`.
+Pole encji jest opcjonalnym ustawieniem Supervisora; może wymagać włączenia
+wyświetlania opcji opcjonalnych. Przełącznik aktywuje wykorzystanie tego pola,
+nie steruje jego dynamicznym ukrywaniem w standardowym formularzu dodatku.
+Po zapisaniu zrestartuj dodatek.
+
+Encja musi podawać prognozowaną energię w kWh. Dobierz prognozę właściwego dnia:
+przed północą „jutro”, po północy „dzisiaj” oznaczają dzień po ładowaniu nocnym.
+Aplikacja odczytuje stan wskazanej encji bez samodzielnej zmiany jej daty lub jednostek.
+
+Suwak ma zakres 1-100 kWh, krok 1 kWh i początkową wartość 20 kWh. Wartość jest
+zapamiętywana po restarcie. Start wymaga spełnienia dotychczasowych zasad SOC,
+czasu i włączenia segmentu oraz prognozy mniejszej od tego progu.
+Przykład dla progu 20 kWh: prognoza 15 kWh dopuszcza start, 20 lub 30 kWh blokuje.
+
+`unknown`, `unavailable`, brak encji, błąd odczytu, wartość ujemna i nieliczbowa
+oznaczają powrót do standardowych zasad SOC. Zero kWh jest poprawną prognozą.
+Warunek jest sprawdzany ponownie w cyklu i po zmianie encji prognozy. Blokada
+nie oznacza zakończenia nocnego okna: późniejsza niższa prognoza może dopuścić start.
+Nie jest wtedy pokazywany czas planowanego startu. Prognoza nie przerywa sesji,
+która już wystartowała, i nie wpływa na ładowanie dzienne.
+
+Po wyłączeniu funkcji i restarcie dodatkowy suwak jest usuwany z MQTT Discovery,
+ale jego wartość pozostaje zapisana na wypadek ponownego włączenia funkcji.
+
 Nie tworzy kopii bieżącego SOC, sezonu, decyzji ani stanów zapisów. Te informacje są dostępne w oryginalnych encjach Deye i dzienniku aplikacji.
 
 Oba przełączniki są wyłączone przy pierwszym uruchomieniu. Ich późniejszy stan jest zachowywany po restarcie. Wyłączenie aktywnego segmentu natychmiast wyłącza Grid Charge i uruchamia pełny reset.

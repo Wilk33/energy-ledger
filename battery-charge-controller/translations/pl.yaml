@@ -1,4 +1,6 @@
 configuration:
+  forecast_condition_enabled: {name: Warunek prognozy dla ładowania nocnego, description: Po włączeniu podaj encję prognozy w kWh. Start nocny wymaga prognozy poniżej suwaka progu produkcji. Brak danych oznacza standardowe zasady SOC.}
+  forecast_entity: {name: Encja prognozy produkcji, description: Opcjonalny sensor prognozowanej energii w kWh. Wymagany przy włączonym warunku prognozy. Użyj prognozy dnia następującego po ładowaniu nocnym. Po zmianie zapisz i zrestartuj dodatek.}
   battery_soc_entity: {name: Encja SOC baterii, description: Oryginalny sensor SOC falownika Deye.}
   prog1_capacity_entity: {name: Prog1 Capacity, description: Encja pojemności programu 1 używanego nocą.}
   prog2_capacity_entity: {name: Prog2 Capacity, description: Encja pojemności programu 2 resetowana po ładowaniu.}

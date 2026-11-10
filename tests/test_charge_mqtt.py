@@ -45,6 +45,7 @@ class ChargeMqttTests(unittest.TestCase):
 		controller.publish_discovery()
 		removed={topic for topic,value,qos,retain in controller.client.calls if value == ""}
 		self.assertEqual(removed, {
+			"homeassistant/number/battery_charge_controller/night_forecast_threshold/config",
 			"homeassistant/number/battery_charge_controller/night_threshold/config",
 			"homeassistant/number/battery_charge_controller/night_target/config",
 			"homeassistant/number/battery_charge_controller/day_threshold/config",

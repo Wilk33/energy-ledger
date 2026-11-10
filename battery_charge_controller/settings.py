@@ -11,6 +11,7 @@ class SettingsError(ValueError):
 
 
 NUMBER_SETTINGS={
+	"night_forecast_threshold",
 	"night_summer_threshold",
 	"night_summer_target",
 	"night_winter_threshold",
@@ -34,6 +35,7 @@ class UserSettings:
 	day_winter_target: float
 	night_enabled: bool
 	day_enabled: bool
+	night_forecast_threshold: float=20
 
 	@classmethod
 	def defaults(cls) -> "UserSettings":
@@ -65,6 +67,10 @@ class UserSettings:
 
 def _validate(settings: UserSettings):
 	for key in NUMBER_SETTINGS:
+		if key == "night_forecast_threshold":
+			if not 1 <= float(settings.night_forecast_threshold) <= 100:
+				raise SettingsError("Forecast threshold must be between 1 and 100 kWh")
+			continue
 		if not 20 <= float(getattr(settings, key)) <= 100:
 			raise SettingsError("SOC settings must be between 20 and 100")
 	for segment in ("night", "day"):

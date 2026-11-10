@@ -129,6 +129,8 @@ class AppConfig:
 	mqtt_discovery_prefix: str
 	device_name: str
 	log_level: str
+	forecast_condition_enabled: bool=False
+	forecast_entity: str | None=None
 
 	@classmethod
 	def from_options(cls, options: dict[str, Any]) -> "AppConfig":
@@ -186,6 +188,8 @@ class AppConfig:
 		if verify_poll > verify_timeout:
 			raise ConfigurationError("verify_poll_seconds must not exceed verify_timeout_seconds")
 		return cls(
+			forecast_condition_enabled=bool(options.get("forecast_condition_enabled", False)),
+			forecast_entity=_entity(options, "forecast_entity", "sensor") if options.get("forecast_condition_enabled", False) else None,
 			entities=entities,
 			timezone=timezone,
 			summer_start=summer_start,

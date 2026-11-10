@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.0
+
+- Dodano opcjonalny warunek prognozy produkcji dla rozpoczęcia ładowania nocnego.
+- Dodano przełącznik funkcji w konfiguracji i opcjonalną encję prognozy energii w kWh.
+- Włączenie funkcji tworzy dodatkowy suwak progu produkcji 1-100 kWh, z zapisem wartości po restarcie.
+- Prognoza równa progowi lub wyższa blokuje start nocny. Brak poprawnej prognozy pozostawia standardowe progi SOC.
+- Warunek nie przerywa rozpoczętego ładowania i nie dotyczy ładowania dziennego. Logi pokazują prognozę, próg i wynik warunku.
+
 ## 1.1.1
 
 - `Prog5 Time` jest sprawdzany przy starcie i dopiero po zmianie oczekiwanej wartości sezonowej.

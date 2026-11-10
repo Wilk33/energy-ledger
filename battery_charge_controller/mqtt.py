@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from .settings import UserSettings
+from . import __version__
 
 
 LOGGER=logging.getLogger(__name__)
@@ -23,6 +24,7 @@ NUMBER_NAMES={
 }
 
 LEGACY_NUMBER_KEYS=("night_threshold", "night_target", "day_threshold", "day_target")
+FORECAST_KEY="night_forecast_threshold"
 
 SWITCH_NAMES={
 	"night_enabled": "Ładowanie nocne",
@@ -34,7 +36,7 @@ SENSOR_NAMES={
 	"charging_ends_in": "Czas do zakończenia ładowania",
 }
 
-WRITABLE=set(NUMBER_NAMES) | set(SWITCH_NAMES)
+WRITABLE=set(NUMBER_NAMES) | set(SWITCH_NAMES) | {FORECAST_KEY}
 
 
 @dataclass(frozen=True)
@@ -51,22 +53,25 @@ class MqttCommand:
 	value: str
 
 
-def discovery_messages(discovery_prefix: str, base_topic: str, device_name: str) -> list[DiscoveryMessage]:
+def discovery_messages(discovery_prefix: str, base_topic: str, device_name: str, forecast_condition_enabled: bool=False) -> list[DiscoveryMessage]:
 	availability=f"{base_topic}/availability"
-	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": "1.1.1"}
+	device={"identifiers": ["battery_charge_controller"], "name": device_name, "manufacturer": "Wilk33", "model": "Battery Charge Controller", "sw_version": __version__}
 	messages=[]
-	for key,name in NUMBER_NAMES.items():
+	numbers=dict(NUMBER_NAMES)
+	if forecast_condition_enabled:
+		numbers[FORECAST_KEY]="Nocny próg prognozy produkcji"
+	for key,name in numbers.items():
 		payload={
 			"name": name,
 			"unique_id": f"battery_charge_controller_{key}",
 			"state_topic": f"{base_topic}/state/{key}",
 			"command_topic": f"{base_topic}/command/{key}",
 			"availability_topic": availability,
-			"min": 20,
+			"min": 1 if key == FORECAST_KEY else 20,
 			"max": 100,
 			"step": 1,
 			"mode": "slider",
-			"unit_of_measurement": "%",
+			"unit_of_measurement": "kWh" if key == FORECAST_KEY else "%",
 			"device": device,
 		}
 		messages.append(DiscoveryMessage("number", key, f"{discovery_prefix}/number/battery_charge_controller/{key}/config", payload))
@@ -98,7 +103,8 @@ def discovery_messages(discovery_prefix: str, base_topic: str, device_name: str)
 
 
 class MqttController:
-	def __init__(self, service: dict[str, Any], base_topic: str, discovery_prefix: str, device_name: str, loop: asyncio.AbstractEventLoop, commands: asyncio.Queue[MqttCommand]):
+	def __init__(self, service: dict[str, Any], base_topic: str, discovery_prefix: str, device_name: str, loop: asyncio.AbstractEventLoop, commands: asyncio.Queue[MqttCommand], forecast_condition_enabled: bool=False):
+		self.forecast_condition_enabled=forecast_condition_enabled
 		self.service=service
 		self.base_topic=base_topic
 		self.discovery_prefix=discovery_prefix
@@ -110,6 +116,7 @@ class MqttController:
 	def settings_payload(self, settings: UserSettings) -> dict[str, str | float]:
 		value=asdict(settings)
 		return {
+			**({FORECAST_KEY:value[FORECAST_KEY]} if self.forecast_condition_enabled else {}),
 			**{key: value[key] for key in NUMBER_NAMES},
 			"night_enabled": "ON" if value["night_enabled"] else "OFF",
 			"day_enabled": "ON" if value["day_enabled"] else "OFF",
@@ -124,6 +131,8 @@ class MqttController:
 			return
 		key=topic.removeprefix(prefix)
 		if key not in WRITABLE:
+			return
+		if key == FORECAST_KEY and not self.forecast_condition_enabled:
 			return
 		try:
 			value=bytes(message.payload).decode("utf-8").strip()
@@ -156,9 +165,11 @@ class MqttController:
 		self.client.publish(topic, str(value), qos=1, retain=retain)
 
 	def publish_discovery(self):
+		if not self.forecast_condition_enabled:
+			self._publish(f"{self.discovery_prefix}/number/battery_charge_controller/{FORECAST_KEY}/config", "")
 		for key in LEGACY_NUMBER_KEYS:
 			self._publish(f"{self.discovery_prefix}/number/battery_charge_controller/{key}/config", "")
-		for message in discovery_messages(self.discovery_prefix, self.base_topic, self.device_name):
+		for message in discovery_messages(self.discovery_prefix, self.base_topic, self.device_name, self.forecast_condition_enabled):
 			self._publish(message.topic, message.payload)
 		self._publish(f"{self.base_topic}/availability", "online")
 

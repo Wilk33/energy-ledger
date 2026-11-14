@@ -6,7 +6,7 @@ import logging
 import math
 import os
 import signal
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -132,7 +132,7 @@ class BatteryChargeRuntime:
 		window=window_for(now, segment, self.config)
 		if not window.contains(now):
 			return False
-		if segment is Segment.DAY and not is_workday(now.date()):
+		if not is_workday(now.astimezone(self.config.timezone).date()):
 			return False
 		settings=self.settings.settings
 		enabled=settings.night_enabled if segment is Segment.NIGHT else settings.day_enabled
@@ -213,6 +213,14 @@ class BatteryChargeRuntime:
 	async def evaluate(self, now: datetime | None=None):
 		async with self.evaluate_lock:
 			local=(now or datetime.now(timezone.utc)).astimezone(self.config.timezone)
+			if not is_workday(local.date()):
+				if self.active_segment is not None:
+					await self._reset("non_workday")
+				else:
+					self.state=ControllerState.IDLE
+					self.mqtt.publish_durations(None, None)
+				LOGGER.info("Ładowanie nocne i dzienne zablokowane: %s jest dniem wolnym",local.date())
+				return
 			await self._sync_prog5(local)
 			soc=parse_soc(await self.home_assistant.get_state(self.config.entities.battery_soc))
 			if self.active_segment is not None:
@@ -319,6 +327,9 @@ class BatteryChargeRuntime:
 
 	def next_delay(self, now: datetime) -> float:
 		delay=float(self.config.evaluation_seconds)
+		local=now.astimezone(self.config.timezone)
+		midnight=local.replace(hour=0, minute=0, second=0, microsecond=0)+timedelta(days=1)
+		delay=min(delay,(midnight.astimezone(timezone.utc)-now.astimezone(timezone.utc)).total_seconds())
 		if self.active_window is not None:
 			remaining=(self.active_window.end.astimezone(timezone.utc)-now.astimezone(timezone.utc)).total_seconds()
 			if remaining > 0:

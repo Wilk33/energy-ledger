@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.1
+
+- Naprawiono brak blokady ładowania nocnego w soboty, niedziele i polskie święta ustawowe.
+- Oba segmenty sprawdzają bieżącą datę lokalną przy ocenie i odtwarzaniu aktywnej sesji po restarcie.
+- Wejście w dzień wolny przerywa aktywne ładowanie przez pełny reset. Blokada działa również przy niedostępnym SOC i prognozie.
+- Zegar planuje ocenę na północ, aby zatrzymać sesję bez czekania na pełny interwał odczytu.
+
 ## 1.2.0
 
 - Dodano opcjonalny warunek prognozy produkcji dla rozpoczęcia ładowania nocnego.

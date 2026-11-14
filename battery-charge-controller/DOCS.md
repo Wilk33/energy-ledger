@@ -57,7 +57,16 @@ Domyślnie oba sezony nocne mają próg 30 procent i cel 80 procent. Oba sezony 
 - dzień latem: obserwacja od 16:10, twardy reset o 18:55, Prog5 Time 19:00,
 - dzień zimą: obserwacja od 13:10, twardy reset o 15:55, Prog5 Time 16:00.
 
-Ładowanie dzienne jest pomijane w soboty, niedziele i polskie dni ustawowo wolne. Sezon letni trwa domyślnie od 1 kwietnia do 30 września. Wszystkie godziny, daty i encje można zmienić w ustawieniach.
+Ładowanie nocne i dzienne działa tylko od poniedziałku do piątku, z wyłączeniem
+polskich świąt ustawowych (w tym Wigilii od 2025 roku). Liczy się bieżąca data
+w skonfigurowanej strefie czasowej, domyślnie Europe/Warsaw. Nocne okno nie nadaje
+uprawnień na cały okres przechodzący przez północ: piątkowa sesja kończy się
+przy wejściu w sobotę o 00:00, a niedzielny wieczór jest zablokowany. W poniedziałek
+po północy sesja może zostać zaplanowana w pozostałej części nocnego okna.
+Analogiczna zasada dotyczy wejścia w święto oraz powrotu do dnia roboczego.
+Zatrzymanie wykonuje pełny reset, a restart w dniu wolnym nie wznawia sesji.
+
+Sezon letni trwa domyślnie od 1 kwietnia do 30 września. Wszystkie godziny, daty i encje można zmienić w ustawieniach.
 
 ## Sposób działania
 

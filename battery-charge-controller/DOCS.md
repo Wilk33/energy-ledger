@@ -93,6 +93,33 @@ Brak odczytu kontrolnego jest traktowany jako stan niepewny. Aplikacja nie przec
 
 Po rzeczywistym zapisie aplikacja czeka domyślnie do 30 sekund na oczekiwaną wartość i ponawia sam odczyt co 2 sekundy. Nie wysyła ponownie polecenia przy każdej opóźnionej odpowiedzi. Parametry `verify_timeout_seconds` i `verify_poll_seconds` można zmienić w konfiguracji.
 
+## Kontrola ustawień po 5 minutach
+
+Po zakończeniu sekwencji startowej aplikacja planuje dodatkową kontrolę za
+5 minut. Odczytuje Capacity i Charge aktywnego programu (Prog1 nocą lub Prog4
+w dzień) oraz Grid Charge. Przy niezgodności ponawia wyłącznie brakujące
+ustawienie i sprawdza jego odczyt. Zgodne parametry nie są ponownie zapisywane.
+Po naprawie sprawdzany jest cały zestaw trzech parametrów.
+
+Kontrola jest powtarzana co 5 minut od zakończenia poprzedniej kontroli lub
+naprawy, aż do końca sesji. Restart wznawiający aktywną sesję planuje kontrolę
+za 5 minut. Zegar uwzględnia ten termin niezależnie od `evaluation_seconds`.
+Koniec okna, osiągnięcie celu i dzień wolny mają pierwszeństwo przed naprawą.
+Chwilowy brak SOC odkłada kontrolę; przekroczenie limitu braku SOC resetuje sesję.
+
+Jeżeli naprawa nie zostanie potwierdzona w czasie i liczbie prób określonych
+w konfiguracji, sterownik próbuje awaryjnie wyłączyć Grid Charge i zapisuje
+błąd. Sesja zostaje zatrzymana i nie startuje automatycznie ponownie w tym
+samym oknie. Dziennik podaje również błąd, jeśli awaryjne wyłączenie nie
+zostało potwierdzone.
+
+Log INFO zawiera „Potwierdzenie HA” oraz „Kontrola po 5 min” z identyfikatorem
+encji, wartością oczekiwaną i odczytaną. DEBUG zawiera każdy odczyt podczas
+oczekiwania na zapis. Jest to potwierdzenie stanu encji HA, nie bezpośredni
+odczyt rejestru falownika ani potwierdzenie przepływu prądu ładowania.
+Ręczna zmiana parametru w Deye podczas aktywnej sesji zostanie potraktowana
+jak niezgodność. Do zatrzymania automatyki służy przełącznik danego segmentu.
+
 ## Pierwsze uruchomienie
 
 1. Sprawdź wszystkie identyfikatory encji Deye w ustawieniach.

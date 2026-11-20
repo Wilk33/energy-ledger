@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2
+
+- Dodano kontrolę Capacity aktywnego programu, trybu Charge i Grid Charge po 5 minutach od zakończenia startu.
+- Podczas sesji kontrola jest powtarzana co 5 minut. Niezgodność powoduje ponowienie tylko brakującego ustawienia z dotychczasowym odczytem kontrolnym i ograniczoną liczbą prób.
+- Zgodne ustawienia są tylko odczytywane. Nieudana naprawa powoduje próbę awaryjnego wyłączenia Grid Charge i zakończenie sesji z błędem, bez automatycznego restartu w tym samym oknie.
+- Rozszerzono logi INFO o potwierdzenia HA i oczekiwane oraz odczytane wartości kontroli po 5 minutach. DEBUG pokazuje także odczyty podczas oczekiwania na zapis.
+
 ## 1.2.1
 
 - Naprawiono brak blokady ładowania nocnego w soboty, niedziele i polskie święta ustawowe.

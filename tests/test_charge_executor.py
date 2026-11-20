@@ -2,7 +2,7 @@ import unittest
 
 from battery_charge_controller.calendar import Segment
 from battery_charge_controller.config import AppConfig
-from battery_charge_controller.executor import CommandExecutor, UncertainWriteError
+from battery_charge_controller.executor import CommandExecutor, UncertainWriteError, VerificationError
 from battery_charge_controller.ha import EntityNotFoundError, HomeAssistantClient, parse_soc, websocket_state_event
 from tests.test_charge_core import base_options
 
@@ -106,6 +106,38 @@ class CommandExecutorTests(unittest.IsolatedAsyncioTestCase):
 		await self.executor.start_charge(Segment.DAY, 80)
 		entities=self.config.entities
 		self.assertEqual(self.client.written_entities, [entities.capacity[3], entities.charge[3], entities.grid_charge])
+
+	async def test_active_supervision_repairs_only_wrong_mode(self):
+		await self.executor.start_charge(Segment.DAY,80)
+		entity=self.config.entities.charge[3]
+		self.client.states[entity]='Allow Gen'
+		self.client.calls.clear()
+		await self.executor.ensure_charge(Segment.DAY,80)
+		self.assertEqual(self.client.written_entities,[entity])
+		self.assertEqual(self.client.states[entity],'Allow Grid & Gen')
+
+	async def test_healthy_active_supervision_does_not_write(self):
+		await self.executor.start_charge(Segment.NIGHT,80)
+		self.client.calls.clear()
+		await self.executor.ensure_charge(Segment.NIGHT,80)
+		self.assertEqual(self.client.written_entities,[])
+
+	async def test_supervision_failure_disables_grid_after_bounded_mode_retries(self):
+		await self.executor.start_charge(Segment.DAY,80)
+		mode=self.config.entities.charge[3]
+		self.client.read_sequences[mode]=['Allow Gen']*1000
+		self.client.calls.clear()
+		with self.assertRaises(VerificationError):
+			await self.executor.ensure_charge(Segment.DAY,80)
+		self.assertEqual(self.client.write_count(mode),self.config.verified_mismatch_retries)
+		self.assertEqual(self.client.states[self.config.entities.grid_charge],'off')
+
+	async def test_delayed_check_detects_mode_reversion_after_grid_on(self):
+		mode=self.config.entities.charge[3]
+		self.client.read_sequences[mode]=['Allow Grid & Gen','Allow Gen']
+		await self.executor.start_charge(Segment.DAY,80)
+		await self.executor.ensure_charge(Segment.DAY,80)
+		self.assertEqual(self.client.write_count(mode),2)
 
 	async def test_full_reset_turns_grid_off_then_resets_all_programs(self):
 		await self.executor.full_reset("hard_stop")

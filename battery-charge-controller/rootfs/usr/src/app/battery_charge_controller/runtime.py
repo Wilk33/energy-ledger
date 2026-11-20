@@ -56,6 +56,7 @@ class BatteryChargeRuntime:
 		self.synced_prog5_value: str | None=None
 		self.evaluate_lock=asyncio.Lock()
 		self.stop_event=asyncio.Event()
+		self.verify_charge_at: datetime | None=None
 
 	@property
 	def watched_entities(self) -> set[str]:
@@ -156,6 +157,7 @@ class BatteryChargeRuntime:
 					self.active_segment=segment
 					self.active_window=window_for(now, segment, self.config)
 					self.last_valid_soc_at=now
+					self.verify_charge_at=now.astimezone(timezone.utc)+timedelta(minutes=5)
 					return
 			await self.executor.full_reset("startup_reconciliation")
 			return
@@ -183,6 +185,7 @@ class BatteryChargeRuntime:
 		self.active_segment=None
 		self.active_window=None
 		self.last_valid_soc_at=None
+		self.verify_charge_at=None
 		self.state=ControllerState.IDLE
 		self.mqtt.publish_durations(None, None)
 
@@ -228,6 +231,9 @@ class BatteryChargeRuntime:
 					if self.last_valid_soc_at is None or (local-self.last_valid_soc_at).total_seconds() >= self.config.soc_stale_seconds:
 						await self._reset("stale_soc")
 					else:
+						if self.verify_charge_at is not None and local.astimezone(timezone.utc) >= self.verify_charge_at:
+							self.verify_charge_at=local.astimezone(timezone.utc)+timedelta(seconds=min(30,self.config.evaluation_seconds))
+							LOGGER.warning("Kontrola ustawień odłożona do czasu dostępności SOC")
 						remaining=self._seconds_until(self.active_window.end, local)
 						self.mqtt.publish_durations(0, remaining)
 					return
@@ -240,6 +246,23 @@ class BatteryChargeRuntime:
 				if decision.action is DecisionAction.RESET:
 					await self._reset(decision.reason, mark_completed=True)
 				else:
+					if self.verify_charge_at is None:
+						self.verify_charge_at=local.astimezone(timezone.utc)+timedelta(minutes=5)
+					if local.astimezone(timezone.utc) >= self.verify_charge_at:
+						try:
+							started=asyncio.get_running_loop().time()
+							await self.executor.ensure_charge(self.active_segment,target)
+							expired=asyncio.get_running_loop().time()-started
+							self.verify_charge_at=local.astimezone(timezone.utc)+timedelta(seconds=300+expired)
+						except Exception:
+							LOGGER.exception("Nie potwierdzono ustawień aktywnego ładowania; Grid Charge awaryjnie wyłączany, sesja zatrzymana")
+							self.settings.mark_completed(self.active_window.execution_key)
+							self.active_segment=None
+							self.active_window=None
+							self.verify_charge_at=None
+							self.state=ControllerState.FAULT
+							self.mqtt.publish_durations(None,None)
+							return
 					remaining=self._seconds_until(self.active_window.end, local)
 					self.mqtt.publish_durations(0, remaining)
 				return
@@ -272,7 +295,11 @@ class BatteryChargeRuntime:
 				return
 			LOGGER.info("Decyzja %s: %s, SOC=%s, próg=%s, cel=%s", segment.value, decision.action.value, soc, threshold, target)
 			if decision.action is DecisionAction.START:
+				started=asyncio.get_running_loop().time()
 				await self.executor.start_charge(segment, target)
+				expired=asyncio.get_running_loop().time()-started
+				self.verify_charge_at=local.astimezone(timezone.utc)+timedelta(seconds=300+expired)
+				LOGGER.info("Zaplanowano kontrolę trzech ustawień ładowania za 5 min: %s",self.verify_charge_at.isoformat())
 				self.active_segment=segment
 				self.active_window=window
 				self.last_valid_soc_at=local
@@ -327,6 +354,8 @@ class BatteryChargeRuntime:
 
 	def next_delay(self, now: datetime) -> float:
 		delay=float(self.config.evaluation_seconds)
+		if self.verify_charge_at is not None:
+			delay=min(delay,max(0.1,(self.verify_charge_at-now.astimezone(timezone.utc)).total_seconds()))
 		local=now.astimezone(self.config.timezone)
 		midnight=local.replace(hour=0, minute=0, second=0, microsecond=0)+timedelta(days=1)
 		delay=min(delay,(midnight.astimezone(timezone.utc)-now.astimezone(timezone.utc)).total_seconds())

@@ -43,6 +43,10 @@ class FakeExecutor:
 		self.started=[]
 		self.reset_reasons=[]
 		self.prog5_values=[]
+		self.checked=[]
+
+	async def ensure_charge(self, segment, target):
+		self.checked.append((segment,target))
 
 	async def start_charge(self, segment, target):
 		self.started.append((segment, target))
@@ -156,6 +160,62 @@ class ChargeRuntimeTests(unittest.IsolatedAsyncioTestCase):
 		self.ha.states[self.config.entities.battery_soc]="unavailable"
 		await self.runtime.evaluate(now)
 		self.assertEqual(self.executor.reset_reasons, ["stale_soc"])
+
+	async def test_active_session_checks_settings_after_five_minutes_only(self):
+		now=datetime(2026,11,20,14,0,tzinfo=WARSAW)
+		self.runtime.active_segment=Segment.DAY
+		self.runtime.active_window=window_for(now,Segment.DAY,self.config)
+		await self.runtime.evaluate(now)
+		await self.runtime.evaluate(now+timedelta(minutes=4,seconds=59))
+		self.assertEqual(self.executor.checked,[])
+		await self.runtime.evaluate(now+timedelta(minutes=5))
+		self.assertEqual(self.executor.checked,[(Segment.DAY,80)])
+		await self.runtime.evaluate(now+timedelta(minutes=6))
+		self.assertEqual(len(self.executor.checked),1)
+
+	async def test_failed_supervision_does_not_leave_a_successful_charging_state(self):
+		async def fail(segment,target):
+			raise RuntimeError('mode write failed')
+		self.executor.ensure_charge=fail
+		now=datetime(2026,11,20,14,0,tzinfo=WARSAW)
+		window=window_for(now,Segment.DAY,self.config)
+		self.runtime.active_segment=Segment.DAY
+		self.runtime.active_window=window
+		self.runtime.verify_charge_at=now
+		await self.runtime.evaluate(now)
+		self.assertEqual(self.runtime.state.value,'fault')
+		self.assertIsNone(self.runtime.active_segment)
+		self.assertIn(window.execution_key,self.coordinator.completed)
+
+	async def test_start_schedules_check_even_with_long_poll_interval(self):
+		now=datetime(2026,11,20,14,0,tzinfo=WARSAW)
+		self.ha.states[self.config.entities.battery_soc]='20'
+		self.runtime.config=replace(self.config,evaluation_seconds=3600)
+		await self.runtime.evaluate(now)
+		self.assertEqual(self.executor.started,[(Segment.DAY,80)])
+		self.assertAlmostEqual((self.runtime.verify_charge_at-now).total_seconds(),300,delta=1)
+		self.assertAlmostEqual(self.runtime.next_delay(now),300,delta=1)
+
+	async def test_end_of_window_resets_before_delayed_check(self):
+		now=datetime(2026,11,20,15,55,tzinfo=WARSAW)
+		self.runtime.active_segment=Segment.DAY
+		self.runtime.active_window=window_for(now-timedelta(minutes=1),Segment.DAY,self.config)
+		self.runtime.verify_charge_at=now
+		await self.runtime.evaluate(now)
+		self.assertEqual(self.executor.reset_reasons,['hard_stop'])
+		self.assertEqual(self.executor.checked,[])
+		self.assertIsNone(self.runtime.verify_charge_at)
+
+	async def test_temporary_unknown_soc_defers_check_without_busy_timer(self):
+		now=datetime(2026,11,20,14,0,tzinfo=WARSAW)
+		self.runtime.active_segment=Segment.DAY
+		self.runtime.active_window=window_for(now,Segment.DAY,self.config)
+		self.runtime.last_valid_soc_at=now-timedelta(seconds=10)
+		self.runtime.verify_charge_at=now
+		self.ha.states[self.config.entities.battery_soc]='unknown'
+		await self.runtime.evaluate(now)
+		self.assertEqual(self.executor.checked,[])
+		self.assertEqual(self.runtime.next_delay(now),30)
 
 	async def test_failed_reset_marks_runtime_as_fault(self):
 		async def fail_reset(reason):

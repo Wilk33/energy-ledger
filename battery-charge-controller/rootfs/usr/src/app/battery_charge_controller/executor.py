@@ -59,6 +59,7 @@ class CommandExecutor:
 		last="unavailable"
 		while True:
 			last=await self.home_assistant.get_state(entity_id)
+			LOGGER.debug("Odczyt kontrolny %s: oczekiwano=%s, odczytano=%s",entity_id,expected,last)
 			if _matches(last, expected):
 				return last
 			remaining=deadline-loop.time()
@@ -75,6 +76,7 @@ class CommandExecutor:
 			await self.home_assistant.call_service(domain, service, entity_id, data)
 			actual=await self._wait_for_expected(entity_id, expected)
 			if _matches(actual, expected):
+				LOGGER.info("Potwierdzenie HA %s: oczekiwano=%s, odczytano=%s",entity_id,expected,actual)
 				return
 			LOGGER.warning("Niezgodny odczyt %s: oczekiwano %s, otrzymano %s", entity_id, expected, actual)
 		raise VerificationError(f"Nie udało się potwierdzić {entity_id}={expected}")
@@ -96,6 +98,31 @@ class CommandExecutor:
 				await self._set_verified(self.config.entities.capacity[index], "number", "set_value", {"value": target}, target)
 				await self._set_verified(self.config.entities.charge[index], "select", "select_option", {"option": self.config.active_charge_option}, self.config.active_charge_option)
 				await self._set_verified(self.config.entities.grid_charge, "switch", "turn_on", {}, "on")
+			except Exception:
+				await self._force_grid_off()
+				raise
+
+	async def ensure_charge(self, segment: Segment, target: float):
+		async with self.lock:
+			index=0 if segment is Segment.NIGHT else 3
+			expected=(
+				(self.config.entities.capacity[index],"number","set_value",{"value":target},target),
+				(self.config.entities.charge[index],"select","select_option",{"option":self.config.active_charge_option},self.config.active_charge_option),
+				(self.config.entities.grid_charge,"switch","turn_on",{},"on"),
+			)
+			try:
+				for entity,domain,service,data,value in expected:
+					actual=await self._read_available(entity)
+					LOGGER.info("Kontrola po 5 min %s: oczekiwano=%s, odczytano=%s",entity,value,actual)
+					if not _matches(actual,value):
+						LOGGER.warning("Ponawiam brakujące ustawienie %s: %s -> %s",entity,actual,value)
+						await self._set_verified(entity,domain,service,data,value)
+				# Confirm the complete set after any repairs, including effects of later writes.
+				for entity,domain,service,data,value in expected:
+					actual=await self._read_available(entity)
+					if not _matches(actual,value):
+						raise VerificationError(f"Niezgodna konfiguracja ładowania {entity}: oczekiwano {value}, odczytano {actual}")
+				LOGGER.info("Kontrola po 5 min: ustawienia %s są zgodne w HA",segment.value)
 			except Exception:
 				await self._force_grid_off()
 				raise
